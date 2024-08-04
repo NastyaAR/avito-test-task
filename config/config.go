@@ -34,5 +34,7 @@ func ReadConfig() (*Config, error) {
 	if err != nil {
 		return nil, fmt.Errorf("read env error: %v", err.Error)
 	}
+
+	fmt.Println(cfg)
 	return &cfg, nil
 }

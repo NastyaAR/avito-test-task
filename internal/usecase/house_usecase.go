@@ -11,18 +11,20 @@ import (
 
 type HouseUsecase struct {
 	houseRepo domain.HouseRepo
+	dbTimeout time.Duration
 }
 
-func NewHouseUsecase(houseRepo *domain.HouseRepo) *HouseUsecase {
+func NewHouseUsecase(houseRepo domain.HouseRepo, dbTimeout time.Duration) *HouseUsecase {
 	return &HouseUsecase{
-		houseRepo: *houseRepo,
+		houseRepo: houseRepo,
+		dbTimeout: dbTimeout,
 	}
 }
 
-func (u *HouseUsecase) Create(ctx context.Context, req *domain.CreateHouseRequest, lg *zap.Logger) (domain.CreateHouseResponse, error) {
+func (u *HouseUsecase) Create(req *domain.CreateHouseRequest, lg *zap.Logger) (domain.CreateHouseResponse, error) {
 	lg.Info("user usecase: create")
 
-	date := time.Now().String()
+	date := time.Now()
 
 	house := domain.House{
 		HouseID:         req.HomeID,
@@ -33,19 +35,22 @@ func (u *HouseUsecase) Create(ctx context.Context, req *domain.CreateHouseReques
 		UpdateFlatDate:  date,
 	}
 
-	err := u.houseRepo.Create(ctx, &house, lg)
+	ctx, cancel := context.WithTimeout(context.Background(), u.dbTimeout)
+	defer cancel()
+
+	house, err := u.houseRepo.Create(ctx, &house, lg)
 	if err != nil {
 		lg.Warn("user usecase: create error", zap.Error(err))
 		return domain.CreateHouseResponse{}, fmt.Errorf("user usecase: create error: %v", err.Error())
 	}
 
 	houseResponse := domain.CreateHouseResponse{
-		HomeID:    req.HomeID,
-		Address:   req.Address,
-		Year:      req.Year,
-		Developer: req.Developer,
-		CreatedAt: date,
-		UpdateAt:  date,
+		HomeID:    house.HouseID,
+		Address:   house.Address,
+		Year:      house.ConstructYear,
+		Developer: house.Developer,
+		CreatedAt: house.CreateHouseDate.Format(time.DateTime),
+		UpdateAt:  house.UpdateFlatDate.Format(time.DateTime),
 	}
 
 	return houseResponse, nil
@@ -56,7 +61,7 @@ func isCorrectFlatStatus(status string) bool {
 		status == domain.DeclinedStatus || status == domain.AnyStatus
 }
 
-func (u *HouseUsecase) GetFlatsByHouseID(ctx context.Context, id int, status string, lg *zap.Logger) (domain.FlatsByHouseResponse, error) {
+func (u *HouseUsecase) GetFlatsByHouseID(id int, status string, lg *zap.Logger) (domain.FlatsByHouseResponse, error) {
 	if id < 0 {
 		lg.Warn("house usecase: get flats by house id error: nil request")
 		return domain.FlatsByHouseResponse{}, errors.New("house usecase: get flats by house id error: nil request")
@@ -66,6 +71,9 @@ func (u *HouseUsecase) GetFlatsByHouseID(ctx context.Context, id int, status str
 		lg.Warn("house usecase: get flats by house id error: bad status", zap.String("status", status))
 		return domain.FlatsByHouseResponse{}, errors.New("house usecase: get flats by house id error: bad status")
 	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), u.dbTimeout)
+	defer cancel()
 
 	flats, err := u.houseRepo.GetFlatsByHouseID(ctx, id, lg)
 	if err != nil {

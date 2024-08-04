@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"avito-test-task/internal/domain"
-	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -49,10 +48,7 @@ func (h *HouseHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), h.dbTimeout)
-	defer cancel()
-
-	houseResponse, err = h.uc.Create(ctx, &houseRequest, h.lg)
+	houseResponse, err = h.uc.Create(&houseRequest, h.lg)
 	if err != nil {
 		h.lg.Warn("house handler: create error", zap.Error(err))
 		respBody = CreateErrorResponse(r.Context(), CreateHouseError, CreateHouseErrorMsg)
@@ -69,6 +65,7 @@ func (h *HouseHandler) Create(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
 	w.Write(respBody)
 	w.WriteHeader(http.StatusOK)
 }
@@ -90,10 +87,7 @@ func (h *HouseHandler) GetFlatsByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), h.dbTimeout)
-	defer cancel()
-
-	flats, err := h.uc.GetFlatsByHouseID(ctx, id, r.Header.Get("status"), h.lg)
+	flats, err := h.uc.GetFlatsByHouseID(id, r.Header.Get("status"), h.lg)
 	if err != nil {
 		h.lg.Warn("house handler: get flats by id error", zap.Error(err))
 		respBody = CreateErrorResponse(r.Context(), GetFlatsByHouseIDError, GetFlatsByHouseIDErrorMsg)

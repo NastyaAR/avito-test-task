@@ -10,7 +10,7 @@ create table users (
 );
 
 create table houses (
-    house_id int primary key ,
+    house_id serial primary key,
     address text not null,
     construct_year int,
     developer text,
@@ -19,12 +19,13 @@ create table houses (
 );
 
 create table flats (
-    flat_id serial primary key,
+    flat_id serial,
     house_id int references houses(house_id),
     price int not null,
     rooms int not null,
     status flat_status not null,
-    moderator_id int
+    moderator_id int,
+    primary key (flat_id, house_id)
 );
 
 create table subscribers (
@@ -34,8 +35,10 @@ create table subscribers (
 
 create table new_flats_outbox (
     id serial primary key,
-    flat_id int references flats(flat_id),
+    flat_id int,
+    house_id int,
     user_id uuid references  users(user_id),
-    status flat_update_msg_status not null
+    status flat_update_msg_status not null,
+    foreign key (flat_id, house_id) references flats(flat_id, house_id)
 );
 

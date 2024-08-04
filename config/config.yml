@@ -1,0 +1,11 @@
+logger:
+    log-level: "info"
+    log-file: "./cmd/log.log"
+
+postgres:
+    host: "localhost"
+    port: 5432
+    user: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
+    db: ${POSTGRES_DB}
+    db-timeout-sec: 1

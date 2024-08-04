@@ -10,8 +10,7 @@ func GenerateJWTToken(userId uuid.UUID, role string) (string, error) {
 	claims := token.Claims.(jwt.MapClaims)
 	claims["userID"] = userId
 	claims["role"] = role
-	// TODO: key store
-	tokenString, err := token.SignedString([]byte(Key))
+	tokenString, err := token.SignedString([]byte("some key"))
 	if err != nil {
 		return "", err
 	}

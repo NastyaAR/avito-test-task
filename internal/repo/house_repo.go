@@ -16,20 +16,24 @@ func NewPostgresHouseRepo(db *pgx.Conn) *PostgresHouseRepo {
 	return &PostgresHouseRepo{db: db}
 }
 
-func (p *PostgresHouseRepo) Create(ctx context.Context, house *domain.House, lg *zap.Logger) error {
+func (p *PostgresHouseRepo) Create(ctx context.Context, house *domain.House, lg *zap.Logger) (domain.House, error) {
 	lg.Info("create house", zap.Int("house_id", house.HouseID))
 
-	query := `insert into house(mail, password, role) values ($1, $2, $3, $4, $5, $6)`
-	_, err := p.db.Query(ctx, query, house.HouseID,
+	var createdHouse domain.House
+	query := `insert into houses(address, construct_year, developer, create_house_date, update_flat_date)
+	values ($1, $2, $3, $4, $5) returning *`
+	err := p.db.QueryRow(ctx, query,
 		house.Address, house.ConstructYear,
 		house.Developer, house.CreateHouseDate,
-		house.UpdateFlatDate)
+		house.UpdateFlatDate).Scan(&createdHouse.HouseID, &createdHouse.Address,
+		&createdHouse.ConstructYear, &createdHouse.Developer,
+		&createdHouse.CreateHouseDate, &createdHouse.UpdateFlatDate)
 	if err != nil {
 		lg.Warn("postgres house create error", zap.Error(err))
-		return err
+		return domain.House{}, err
 	}
 
-	return nil
+	return createdHouse, nil
 }
 
 func (p *PostgresHouseRepo) DeleteByID(ctx context.Context, id int, lg *zap.Logger) error {

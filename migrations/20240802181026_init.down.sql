@@ -1,7 +1,7 @@
 drop table if exists new_flats_outbox;
 drop table if exists subscribers;
 drop table if exists flats;
-drop table if exists homes;
+drop table if exists houses;
 drop table if exists users;
 
 drop type if exists user_role;

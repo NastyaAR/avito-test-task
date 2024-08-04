@@ -3,6 +3,7 @@ package domain
 import (
 	"context"
 	"go.uber.org/zap"
+	"time"
 )
 
 type House struct {
@@ -10,8 +11,8 @@ type House struct {
 	Address         string
 	ConstructYear   int
 	Developer       string
-	CreateHouseDate string
-	UpdateFlatDate  string
+	CreateHouseDate time.Time
+	UpdateFlatDate  time.Time
 }
 
 type CreateHouseRequest struct {
@@ -47,12 +48,12 @@ type SingleFlatResponse struct {
 }
 
 type HouseUsecase interface {
-	Create(ctx context.Context, req *CreateHouseRequest, lg *zap.Logger) (CreateHouseResponse, error)
-	GetFlatsByHouseID(ctx context.Context, id int, status string, lg *zap.Logger) (FlatsByHouseResponse, error)
+	Create(req *CreateHouseRequest, lg *zap.Logger) (CreateHouseResponse, error)
+	GetFlatsByHouseID(id int, status string, lg *zap.Logger) (FlatsByHouseResponse, error)
 }
 
 type HouseRepo interface {
-	Create(ctx context.Context, house *House, lg *zap.Logger) error
+	Create(ctx context.Context, house *House, lg *zap.Logger) (House, error)
 	DeleteByID(ctx context.Context, id int, lg *zap.Logger) error
 	Update(ctx context.Context, newHouseData *House, lg *zap.Logger) error
 	GetByID(ctx context.Context, id int, lg *zap.Logger) (House, error)
