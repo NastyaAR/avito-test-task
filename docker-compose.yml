@@ -1,0 +1,83 @@
+version: "3.9"
+
+services:
+  backend:
+    build:
+      dockerfile: Dockerfile
+      context: ./app
+    ports: 
+      - "8081:8080"
+    image: goback
+    container_name: app
+    depends_on:
+      - postgres
+      - redis
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    networks:
+        - dev
+  
+  postgres:
+    image: postgres:12.19-bullseye
+    container_name: postgres-db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PGDATA: "/var/lib/postgresql/data/pgdata"
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./config/postgres.conf:/usr/local/etc/postgres/postgres.conf
+      - postgres-init:/docker-entrypoint-initdb.d
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 1G
+        reservations:
+          cpus: '0.2'
+          memory: 512M
+    networks:
+        - dev
+
+  redis:
+    container_name: redis-db
+    image: redis:6.2-alpine
+    healthcheck:
+      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --save 20 1 --loglevel ${REDIS_LOG_LEVEL} --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - ./redis-data:/data
+    networks:
+      - dev
+
+
+volumes:
+  postgres-init:
+  postgres-data:
+  config:
+  redis-data:
+  
+networks:
+    dev: 
+        driver: bridge
