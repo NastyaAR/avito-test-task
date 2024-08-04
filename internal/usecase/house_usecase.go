@@ -53,38 +53,43 @@ func (u *HouseUsecase) Create(ctx context.Context, req *domain.CreateHouseReques
 
 func isCorrectFlatStatus(status string) bool {
 	return status == domain.CreatedStatus || status == domain.ApprovedStatus ||
-		status == domain.DeclinedStatus || status == domain.ModeratingStatus
+		status == domain.DeclinedStatus || status == domain.AnyStatus
 }
 
-func (u *HouseUsecase) GetFlatsByHouseID(ctx context.Context, id int, status string, lg *zap.Logger) ([]domain.SingleFlatResponse, error) {
+func (u *HouseUsecase) GetFlatsByHouseID(ctx context.Context, id int, status string, lg *zap.Logger) (domain.FlatsByHouseResponse, error) {
 	if id < 0 {
 		lg.Warn("house usecase: get flats by house id error: nil request")
-		return nil, errors.New("house usecase: get flats by house id error: nil request")
+		return domain.FlatsByHouseResponse{}, errors.New("house usecase: get flats by house id error: nil request")
 	}
 
 	if !isCorrectFlatStatus(status) {
 		lg.Warn("house usecase: get flats by house id error: bad status", zap.String("status", status))
-		return nil, errors.New("house usecase: get flats by house id error: bad status")
+		return domain.FlatsByHouseResponse{}, errors.New("house usecase: get flats by house id error: bad status")
 	}
 
-	flats, err := u.houseRepo.GetFlatsByHouseID(ctx, id, status, lg)
+	flats, err := u.houseRepo.GetFlatsByHouseID(ctx, id, lg)
 	if err != nil {
 		lg.Warn("house usecase: get flats by house id error", zap.Error(err))
-		return nil, fmt.Errorf("house usecase: get flats by house id error: %v", err.Error())
+		return domain.FlatsByHouseResponse{}, fmt.Errorf("house usecase: get flats by house id error: %v", err.Error())
 	}
 
-	var flatsArr []domain.SingleFlatResponse
+	var (
+		flatsArr   []domain.SingleFlatResponse
+		singleFlat domain.SingleFlatResponse
+	)
 	for _, flat := range flats {
-		singleFlat := domain.SingleFlatResponse{
-			ID:      flat.ID,
-			HouseID: flat.HouseID,
-			Price:   flat.Price,
-			Rooms:   flat.Rooms,
-			Status:  flat.Status,
+		if flat.Status == status || status == domain.AnyStatus {
+			singleFlat = domain.SingleFlatResponse{
+				ID:      flat.ID,
+				HouseID: flat.HouseID,
+				Price:   flat.Price,
+				Rooms:   flat.Rooms,
+				Status:  flat.Status,
+			}
 		}
 
 		flatsArr = append(flatsArr, singleFlat)
 	}
 
-	return flatsArr, nil
+	return domain.FlatsByHouseResponse{flatsArr}, nil
 }

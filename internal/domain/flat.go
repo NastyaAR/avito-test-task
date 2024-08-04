@@ -10,6 +10,7 @@ const (
 	ApprovedStatus   = "approved"
 	DeclinedStatus   = "declined"
 	ModeratingStatus = "on moderation"
+	AnyStatus        = "any"
 )
 
 type Flat struct {

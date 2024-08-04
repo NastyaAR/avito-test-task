@@ -47,7 +47,7 @@ func (p *PostgresFlatRepo) DeleteByID(ctx context.Context, id int, lg *zap.Logge
 	return nil
 }
 
-func (p *PostgresFlatRepo) Update(ctx context.Context, newFlatData *domain.Flat, lg *zap.Logger) (Flat, error) {
+func (p *PostgresFlatRepo) Update(ctx context.Context, newFlatData *domain.Flat, lg *zap.Logger) (domain.Flat, error) {
 	lg.Info("postgres flat repo: update")
 
 	var flat domain.Flat

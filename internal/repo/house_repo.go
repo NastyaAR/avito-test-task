@@ -108,14 +108,15 @@ func (p *PostgresHouseRepo) GetAll(ctx context.Context, offset int, limit int, l
 	return houses, err
 }
 
-func (p *PostgresHouseRepo) GetFlatsByHouseID(ctx context.Context, id int, status string, lg *zap.Logger) ([]domain.Flat, error) {
+func (p *PostgresHouseRepo) GetFlatsByHouseID(ctx context.Context, id int, lg *zap.Logger) ([]domain.Flat, error) {
 	lg.Info("get flats by house id", zap.Int("house_id", id))
 
 	query := `select id, house_id, price, rooms, status 
 			from flats f join houses h
 			on f.house_id = h.house_id
-			where h.house_id=$1 and f.status=$2`
-	rows, err := p.db.Query(ctx, query, id, status)
+			where h.house_id=$1`
+
+	rows, err := p.db.Query(ctx, query, id)
 	if err != nil {
 		lg.Warn("postgres house repo: get flats by house id", zap.Error(err))
 		return nil, fmt.Errorf("postgres house repo: get flats by house id: %v", err.Error())

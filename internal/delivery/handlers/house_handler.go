@@ -6,24 +6,30 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"strconv"
+	"strings"
+	"time"
 
-	"github.com/go-chi/chi/v5/middleware"
 	"go.uber.org/zap"
 )
 
 type HouseHandler struct {
-	uc domain.HouseUsecase
-	lg *zap.Logger
+	uc        domain.HouseUsecase
+	lg        *zap.Logger
+	dbTimeout time.Duration
 }
 
-func NewHouseHandler(uc domain.HouseUsecase, lg *zap.Logger) *HouseHandler {
-	return &HouseHandler{uc, lg}
+func NewHouseHandler(uc domain.HouseUsecase, timeout time.Duration, lg *zap.Logger) *HouseHandler {
+	return &HouseHandler{uc, lg, timeout}
 }
 
 func (h *HouseHandler) Create(w http.ResponseWriter, r *http.Request) {
-	var houseRequest domain.CreateHouseRequest
-	var houseResponse domain.CreateHouseResponse
-	var respBody []byte
+	var (
+		houseRequest  domain.CreateHouseRequest
+		houseResponse domain.CreateHouseResponse
+		respBody      []byte
+	)
+
 	defer r.Body.Close()
 
 	body, err := io.ReadAll(r.Body)
@@ -43,50 +49,68 @@ func (h *HouseHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	houseResponse, err := usecase.
+	ctx, cancel := context.WithTimeout(context.Background(), h.dbTimeout)
+	defer cancel()
+
+	houseResponse, err = h.uc.Create(ctx, &houseRequest, h.lg)
+	if err != nil {
+		h.lg.Warn("house handler: create error", zap.Error(err))
+		respBody = CreateErrorResponse(r.Context(), CreateHouseError, CreateHouseErrorMsg)
 		w.Write(respBody)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	respBody, err = json.Marshal(houseResponse)
+	if err != nil {
+		h.lg.Warn("house handler: create error", zap.Error(err))
+		respBody = CreateErrorResponse(r.Context(), MarshalHTTPBodyError, MarshalHTTPBodyErrorMsg)
+		w.Write(respBody)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	w.Write(respBody)
 	w.WriteHeader(http.StatusOK)
 }
 
-type GetRoomsRequest struct {
-	ID int `json:"id"`
-}
-
-type GetRoomsResponse struct {
-	Flats []domain.Flat
-}
-
-func (h *HouseHandler) GetRoomsByID(w http.ResponseWriter, r *http.Request) {
-	requestID := middleware.GetReqID(r.Context())
-	lg := h.lg.With(zap.String("RequestID", requestID))
-	lg.Info("HouseHandler: GetRoomsByID - start")
-
+func (h *HouseHandler) GetFlatsByID(w http.ResponseWriter, r *http.Request) {
+	var (
+		respBody []byte
+	)
 	defer r.Body.Close()
 
-	var req GetRoomsRequest
-	body, err := io.ReadAll(r.Body)
+	pathParts := strings.Split(r.URL.Path, "/")
+	idString := pathParts[len(pathParts)-1]
+	id, err := strconv.Atoi(idString)
 	if err != nil {
-		return
-	}
-
-	err = json.Unmarshal(body, &req)
-	if err != nil {
-		return
-	}
-
-	flats, err := h.uc.GetFlatsByID(context.TODO(), req.ID, lg)
-	if err != nil {
-
-	}
-
-	resp, err := json.Marshal(flats)
-	if err != nil {
-		lg.Warn("HouseHandler: GetRoomsByID - marshal error", zap.Error(err), zap.Any(flats))
+		h.lg.Warn("house handler: get flats by id error", zap.Error(err))
+		respBody = CreateErrorResponse(r.Context(), ParseURLError, ParseURLErrorMsg)
+		w.Write(respBody)
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("internal error"))
+		return
 	}
 
-	lg.Info("HouseHandler: GetRoomsByID - success")
+	ctx, cancel := context.WithTimeout(context.Background(), h.dbTimeout)
+	defer cancel()
+
+	flats, err := h.uc.GetFlatsByHouseID(ctx, id, r.Header.Get("status"), h.lg)
+	if err != nil {
+		h.lg.Warn("house handler: get flats by id error", zap.Error(err))
+		respBody = CreateErrorResponse(r.Context(), GetFlatsByHouseIDError, GetFlatsByHouseIDErrorMsg)
+		w.Write(respBody)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	respBody, err = json.Marshal(flats)
+	if err != nil {
+		h.lg.Warn("house handler: get flats by id error", zap.Error(err))
+		respBody = CreateErrorResponse(r.Context(), MarshalHTTPBodyError, MarshalHTTPBodyErrorMsg)
+		w.Write(respBody)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.Write(respBody)
 	w.WriteHeader(http.StatusOK)
-	w.Write(resp)
 }

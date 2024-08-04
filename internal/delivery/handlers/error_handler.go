@@ -12,21 +12,28 @@ type ErrorResponse struct {
 	Code      int    `json:"code"`
 }
 
+type ErrorPair struct {
+	Message   string
+	ErrorCode int
+}
+
 const (
 	ReadHTTPBodyError = iota + 1
 	UnmarshalHTTPBodyError
+	CreateHouseError
+	MarshalHTTPBodyError
+	ParseURLError
+	GetFlatsByHouseIDError
 )
 
 const (
-	ReadHTTPBodyMsg      = "can't read request"
-	UnmarshalHTTPBodyMsg = "can't unmarshal request"
+	ReadHTTPBodyMsg           = "can't read request"
+	UnmarshalHTTPBodyMsg      = "can't unmarshal request"
+	CreateHouseErrorMsg       = "can't create house"
+	MarshalHTTPBodyErrorMsg   = "can't marshal response"
+	ParseURLErrorMsg          = "can't parse url"
+	GetFlatsByHouseIDErrorMsg = "can't get flats by house id"
 )
-
-//type CustomError struct {
-//
-//}
-
-//var ErrReflect map[int]string
 
 func CreateErrorResponse(ctx context.Context, errCode int, msg string) []byte {
 	var errResponse ErrorResponse

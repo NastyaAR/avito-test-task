@@ -68,5 +68,4 @@ func (u *FlatUsecase) Update(ctx context.Context, newFlatData *domain.UpdateFlat
 	}
 
 	return updatedFlatResponse, nil
-
 }
