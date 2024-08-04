@@ -74,14 +74,16 @@ func (p *PostgresUserRepo) GetByID(ctx context.Context, id uuid.UUID, lg *zap.Lo
 }
 
 func (p *PostgresUserRepo) GetAll(ctx context.Context, offset int, limit int, lg *zap.Logger) ([]domain.User, error) {
-	var users []domain.User
 	lg.Info("get users", zap.Int("offset", offset), zap.Int("limit", limit))
 
 	query := `select * from users limit $1 offset $2`
 	rows, err := p.db.Query(ctx, query, limit, offset)
 
+	var (
+		users []domain.User
+		user  domain.User
+	)
 	for rows.Next() {
-		user := domain.User{}
 		err = rows.Scan(&user.UserID, &user.Mail, &user.Password, &user.Role)
 		if err != nil {
 			lg.Warn("postgres user get all error: scan user error")

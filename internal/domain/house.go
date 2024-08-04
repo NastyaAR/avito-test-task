@@ -48,7 +48,7 @@ type SingleFlatResponse struct {
 
 type HouseUsecase interface {
 	Create(ctx context.Context, req *CreateHouseRequest, lg *zap.Logger) (CreateHouseResponse, error)
-	GetFlatsByHouseID(ctx context.Context, req *FlatsByHouseRequest, lg *zap.Logger) ([]FlatsByHouseResponse, error)
+	GetFlatsByHouseID(ctx context.Context, id int, status string, lg *zap.Logger) ([]SingleFlatResponse, error)
 }
 
 type HouseRepo interface {
@@ -57,5 +57,5 @@ type HouseRepo interface {
 	Update(ctx context.Context, newHouseData *House, lg *zap.Logger) error
 	GetByID(ctx context.Context, id int, lg *zap.Logger) (House, error)
 	GetAll(ctx context.Context, offset int, limit int, lg *zap.Logger) ([]House, error)
-	GetFlatsByHouseID(ctx context.Context, id int, lg *zap.Logger) ([]Flat, error)
+	GetFlatsByHouseID(ctx context.Context, id int, status string, lg *zap.Logger) ([]Flat, error)
 }

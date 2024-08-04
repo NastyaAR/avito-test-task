@@ -1,10 +1,10 @@
-drop table new_flats_outbox;
-drop table subscribers;
-drop table flats;
-drop table homes;
-drop table users;
+drop table if exists new_flats_outbox;
+drop table if exists subscribers;
+drop table if exists flats;
+drop table if exists homes;
+drop table if exists users;
 
-drop type user_role;
-drop type flat_status;
-drop  type flat_update_msg_status;
+drop type if exists user_role;
+drop type if exists flat_status;
+drop type if exists flat_update_msg_status;
 

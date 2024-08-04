@@ -11,13 +11,11 @@ import (
 
 type HouseUsecase struct {
 	houseRepo domain.HouseRepo
-	dbTimeout time.Duration
 }
 
-func NewHouseUsecase(houseRepo *domain.HouseRepo, timeout time.Duration) *HouseUsecase {
+func NewHouseUsecase(houseRepo *domain.HouseRepo) *HouseUsecase {
 	return &HouseUsecase{
 		houseRepo: *houseRepo,
-		dbTimeout: timeout,
 	}
 }
 
@@ -53,11 +51,40 @@ func (u *HouseUsecase) Create(ctx context.Context, req *domain.CreateHouseReques
 	return houseResponse, nil
 }
 
-func (u *HouseUsecase) GetFlatsByHouseID(ctx context.Context, req *domain.FlatsByHouseRequest, lg *zap.Logger) ([]domain.FlatsByHouseResponse, error) {
-	if req == nil {
+func isCorrectFlatStatus(status string) bool {
+	return status == domain.CreatedStatus || status == domain.ApprovedStatus ||
+		status == domain.DeclinedStatus || status == domain.ModeratingStatus
+}
+
+func (u *HouseUsecase) GetFlatsByHouseID(ctx context.Context, id int, status string, lg *zap.Logger) ([]domain.SingleFlatResponse, error) {
+	if id < 0 {
 		lg.Warn("house usecase: get flats by house id error: nil request")
 		return nil, errors.New("house usecase: get flats by house id error: nil request")
 	}
 
-	err := u.houseRepo.GetAll()
+	if !isCorrectFlatStatus(status) {
+		lg.Warn("house usecase: get flats by house id error: bad status", zap.String("status", status))
+		return nil, errors.New("house usecase: get flats by house id error: bad status")
+	}
+
+	flats, err := u.houseRepo.GetFlatsByHouseID(ctx, id, status, lg)
+	if err != nil {
+		lg.Warn("house usecase: get flats by house id error", zap.Error(err))
+		return nil, fmt.Errorf("house usecase: get flats by house id error: %v", err.Error())
+	}
+
+	var flatsArr []domain.SingleFlatResponse
+	for _, flat := range flats {
+		singleFlat := domain.SingleFlatResponse{
+			ID:      flat.ID,
+			HouseID: flat.HouseID,
+			Price:   flat.Price,
+			Rooms:   flat.Rooms,
+			Status:  flat.Status,
+		}
+
+		flatsArr = append(flatsArr, singleFlat)
+	}
+
+	return flatsArr, nil
 }

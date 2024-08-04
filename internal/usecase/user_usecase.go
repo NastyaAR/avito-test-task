@@ -8,18 +8,15 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
-	"time"
 )
 
 type UserUsecase struct {
-	userRepo  domain.UserRepo
-	dbTimeout time.Duration
+	userRepo domain.UserRepo
 }
 
-func NewUserUsecase(userRepo *domain.UserRepo, timeout time.Duration) *UserUsecase {
+func NewUserUsecase(userRepo *domain.UserRepo) *UserUsecase {
 	return &UserUsecase{
-		userRepo:  *userRepo,
-		dbTimeout: timeout,
+		userRepo: *userRepo,
 	}
 }
 

@@ -15,28 +15,27 @@ create table houses (
     construct_year int,
     developer text,
     create_house_date timestamp without time zone,
-    update_flat_date timestamp without time zone,
+    update_flat_date timestamp without time zone
 );
 
 create table flats (
-    id serial primary key,
-    flat_number int not null,
+    flat_id serial primary key,
+    house_id int references houses(house_id),
     price int not null,
     rooms int not null,
     status flat_status not null,
-    house_id int references houses(house_id),
     moderator_id int
 );
 
 create table subscribers (
-    user_id int references users(id),
+    user_id uuid references users(user_id),
     home_id int references houses(house_id)
 );
 
 create table new_flats_outbox (
     id serial primary key,
-    flat_id int references flats(id),
-    user_id int references  users(id),
+    flat_id int references flats(flat_id),
+    user_id uuid references  users(user_id),
     status flat_update_msg_status not null
 );
 

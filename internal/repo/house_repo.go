@@ -83,7 +83,6 @@ func (p *PostgresHouseRepo) GetByID(ctx context.Context, id int, lg *zap.Logger)
 
 func (p *PostgresHouseRepo) GetAll(ctx context.Context, offset int, limit int, lg *zap.Logger) ([]domain.House, error) {
 	lg.Info("get houses", zap.Int("offset", offset), zap.Int("limit", limit))
-	var houses []domain.House
 
 	query := `select * from houses limit $1 offset $2`
 	rows, err := p.db.Query(ctx, query, limit, offset)
@@ -92,8 +91,11 @@ func (p *PostgresHouseRepo) GetAll(ctx context.Context, offset int, limit int, l
 		return nil, err
 	}
 
+	var (
+		houses []domain.House
+		house  domain.House
+	)
 	for rows.Next() {
-		house := domain.House{}
 		err = rows.Scan(&house.HouseID, &house.Address, &house.ConstructYear,
 			&house.Developer, &house.CreateHouseDate, &house.UpdateFlatDate)
 		if err != nil {
