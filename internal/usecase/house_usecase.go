@@ -5,19 +5,25 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 	"time"
 )
 
 type HouseUsecase struct {
-	houseRepo domain.HouseRepo
-	dbTimeout time.Duration
+	houseRepo    domain.HouseRepo
+	notifySender domain.NotifySender
+	notifyRepo   domain.NotifyRepo
+	dbTimeout    time.Duration
 }
 
-func NewHouseUsecase(houseRepo domain.HouseRepo, dbTimeout time.Duration) *HouseUsecase {
+func NewHouseUsecase(houseRepo domain.HouseRepo, notifySender domain.NotifySender,
+	notifyRepo domain.NotifyRepo, dbTimeout time.Duration) *HouseUsecase {
 	return &HouseUsecase{
-		houseRepo: houseRepo,
-		dbTimeout: dbTimeout,
+		houseRepo:    houseRepo,
+		notifySender: notifySender,
+		notifyRepo:   notifyRepo,
+		dbTimeout:    dbTimeout,
 	}
 }
 
@@ -91,10 +97,10 @@ func (u *HouseUsecase) GetFlatsByHouseID(ctx context.Context, id int, status str
 	return domain.FlatsByHouseResponse{flatsArr}, nil
 }
 
-func (uc *HouseUsecase) SubscribeByID(ctx context.Context, id int, req *domain.SubscribeOnHouseRequest, lg *zap.Logger) error {
+func (uc *HouseUsecase) SubscribeByID(ctx context.Context, id int, userID uuid.UUID, lg *zap.Logger) error {
 	lg.Info("house usecase: subscribe by id")
 
-	err := uc.houseRepo.SubscribeByID(ctx, id, req.Mail, lg)
+	err := uc.houseRepo.SubscribeByID(ctx, id, userID, lg)
 	if err != nil {
 		lg.Warn("house usecase: subscribe by id", zap.Error(err))
 		return fmt.Errorf("house usecase: subscribe by id: %v", err.Error())
@@ -103,7 +109,7 @@ func (uc *HouseUsecase) SubscribeByID(ctx context.Context, id int, req *domain.S
 	return nil
 }
 
-func (uc *HouseUsecase) Subscribing(done chan bool, frequency time.Duration, lg *zap.Logger) {
+func (uc *HouseUsecase) Notifying(done chan bool, frequency time.Duration, lg *zap.Logger) {
 	for {
 		select {
 		case <-done:
@@ -114,13 +120,20 @@ func (uc *HouseUsecase) Subscribing(done chan bool, frequency time.Duration, lg 
 			ctx, cancel := context.WithTimeout(context.Background(), uc.dbTimeout)
 			defer cancel()
 
-			reqs, err := uc.
+			notifies, err := uc.notifyRepo.GetNoSendNotifies(ctx, lg)
 			if err != nil {
-				lg.Warnf("pay adapter: paying error: %v", err.Error())
+				lg.Warn("house usecase: notifying error", zap.Error(err))
 			}
 
-			for _, req := range reqs {
-
+			for _, notify := range notifies {
+				msg := fmt.Sprintf("New flat with number %d in house %d!", notify.FlatID, notify.HouseID)
+				err = uc.notifySender.SendEmail(ctx, notify.UserMail, msg)
+				if err != nil {
+					lg.Warn("house usecase: notifying error: send email error", zap.Error(err))
+					continue
+				} else {
+					err = uc.notifyRepo.SendNotifyByID(ctx, notify.ID, lg)
+				}
 			}
 			time.Sleep(frequency)
 		}

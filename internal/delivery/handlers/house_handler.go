@@ -2,8 +2,10 @@ package handlers
 
 import (
 	"avito-test-task/internal/domain"
+	"avito-test-task/pkg"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"strconv"
@@ -112,4 +114,47 @@ func (h *HouseHandler) GetFlatsByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Write(respBody)
+}
+
+func (h *HouseHandler) Subscribe(w http.ResponseWriter, r *http.Request) {
+	var (
+		respBody []byte
+	)
+	defer r.Body.Close()
+
+	fmt.Println(r.URL.Path)
+
+	userID, err := pkg.ExtractUserIDFromToken(r.Header.Get("authorization"))
+	if err != nil {
+		h.lg.Warn("flat handler: subscribe error", zap.Error(err))
+		respBody = CreateErrorResponse(r.Context(), SubscribeOnHouseError, SubscribeOnHouseErrorMsg)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(respBody)
+		return
+	}
+
+	pathParts := strings.Split(r.URL.Path, "/")
+	idString := pathParts[len(pathParts)-2]
+	id, err := strconv.Atoi(idString)
+	if err != nil {
+		h.lg.Warn("house handler: subscribe error", zap.Error(err))
+		respBody = CreateErrorResponse(r.Context(), ParseURLError, ParseURLErrorMsg)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(respBody)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	err = h.uc.SubscribeByID(ctx, id, userID, h.lg)
+	if err != nil {
+		h.lg.Warn("house handler: subscribe error", zap.Error(err))
+		respBody = CreateErrorResponse(r.Context(), SubscribeOnHouseError, SubscribeOnHouseErrorMsg)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(respBody)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }

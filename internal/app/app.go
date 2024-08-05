@@ -4,6 +4,7 @@ import (
 	"avito-test-task/config"
 	"avito-test-task/internal/delivery/handlers"
 	mdware "avito-test-task/internal/delivery/middleware"
+	"avito-test-task/internal/ports"
 	"avito-test-task/internal/repo"
 	"avito-test-task/internal/usecase"
 	"avito-test-task/pkg"
@@ -34,8 +35,11 @@ func Run(cfg *config.Config) {
 		log.Fatalf("can't connect to postgresql: %v", err.Error())
 	}
 
+	notifyRepo := repo.NewPostgresNotifyRepo(pool)
+	notifySender := ports.NewSender()
+
 	houseRepo := repo.NewPostgresHouseRepo(pool)
-	houseUsecase := usecase.NewHouseUsecase(houseRepo, 5*time.Second)
+	houseUsecase := usecase.NewHouseUsecase(houseRepo, notifySender, notifyRepo, 5*time.Second)
 	houseHandler := handlers.NewHouseHandler(houseUsecase, time.Duration(cfg.DbTimeoutSec), lg)
 
 	userRepo := repo.NewPostrgesUserRepo(pool)
@@ -57,10 +61,10 @@ func Run(cfg *config.Config) {
 	r.Post("/login", userHandler.Login)
 	r.Post("/flat/update", flatHandler.Update)
 	r.Post("/flat/create", mdware.AuthMiddleware(flatHandler.Create))
+	r.Post("/house/{id}/subscribe", houseHandler.Subscribe)
 
 	err = http.ListenAndServe(":8081", r)
 	if err != nil {
 		fmt.Println(err)
-	}
-	fmt.Println("final")
+	}g
 }

@@ -53,7 +53,7 @@ func (h *FlatHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	userID, err := pkg.ExtractUserIDFromToken(r.Header.Get("authorization"))
 	if err != nil {
-		h.lg.Warn("flat handler: create error", zap.Error(err))
+		h.lg.Warn("flat handler: create error: extract id", zap.Error(err))
 		respBody = CreateErrorResponse(r.Context(), CreateFlatError, CreateFlatErrorMsg)
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write(respBody)

@@ -33,11 +33,12 @@ func ValidateJWTToken(tokenString string) (*jwt.MapClaims, error) {
 
 func ExtractUserIDFromToken(tokenString string) (uuid.UUID, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		return uuid.Nil, nil
+		return []byte("some key"), nil
 	})
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		return claims["userID"].(uuid.UUID), nil
+		userID, _ := uuid.Parse(claims["userID"].(string))
+		return userID, nil
 	}
 
 	return uuid.Nil, err

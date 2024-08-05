@@ -4,6 +4,7 @@ import (
 	"avito-test-task/internal/domain"
 	"context"
 	"fmt"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"go.uber.org/zap"
 )
@@ -140,6 +141,17 @@ func (p *PostgresHouseRepo) GetFlatsByHouseID(ctx context.Context, id int, lg *z
 	return flats, err
 }
 
-func (p *PostgresHouseRepo) SubscribeByID(ctx context.Context, id int, email string, lg *zap.Logger) error {
-	
+func (p *PostgresHouseRepo) SubscribeByID(ctx context.Context, houseID int, userID uuid.UUID, lg *zap.Logger) error {
+	lg.Info("postgres house repo: subscribe by id")
+
+	fmt.Println(userID)
+
+	query := `insert into subscribers(user_id, house_id) values ($1, $2)`
+	_, err := p.db.Exec(ctx, query, userID, houseID)
+	if err != nil {
+		lg.Warn("postgres house repo: subscribe by id error", zap.Error(err))
+		return fmt.Errorf("postgres house repo: subscribe by id error: %v", err.Error())
+	}
+
+	return nil
 }

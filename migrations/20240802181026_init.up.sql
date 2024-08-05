@@ -46,15 +46,17 @@ create table new_flats_outbox (
 create or replace function insert_flat_to_outbox()
     returns trigger as $$
 declare
-    subscriberID uuid;
+    subscriber_mail text;
 begin
-    select user_id into subscriberID from subscribers where user_id=NEW.user_id and house_id=NEW.house_id;
+    select mail into subscriber_mail
+    from subscribers join users u on u.user_id = subscribers.user_id
+    where subscribers.user_id=NEW.user_id and house_id=NEW.house_id;
 
-    if subscriberID is null then
+    if subscriber_mail is null then
         return NEW;
     end if;
 
-    insert into subscribers(user_id, house_id) values (NEW.user_id, NEW.house_id);
+    insert into new_flats_outbox(flat_id, house_id, mail, status) values (NEW.flat_id, NEW.house_id, subscriber_mail, 'no send');
     return NEW;
 end;
 $$ language plpgsql;
@@ -64,3 +66,23 @@ CREATE TRIGGER flat_create_trigger
     FOR EACH ROW
 EXECUTE FUNCTION insert_flat_to_outbox();
 
+create or replace  function check_exists_subscriber()
+    returns trigger as $$
+declare
+    usr uuid;
+begin
+    select subscribers.user_id into usr from subscribers
+    where subscribers.user_id=NEW.user_id and subscribers.house_id=NEW.house_id;
+
+    if usr is not null then
+        return NULL;
+    end if;
+
+    return NEW;
+end;
+$$ language plpgsql;
+
+CREATE TRIGGER insert_subscribe_trigger
+    BEFORE INSERT ON subscribers
+    FOR EACH ROW
+EXECUTE FUNCTION check_exists_subscriber();
