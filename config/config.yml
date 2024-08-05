@@ -3,7 +3,7 @@ logger:
     log-file: "./cmd/log.log"
 
 postgres:
-    host: "localhost"
+    host: "postgres"
     port: 5432
     user: ${POSTGRES_USER}
     password: ${POSTGRES_PASSWORD}

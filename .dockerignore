@@ -1,0 +1,9 @@
+  postgres-init
+  postgres-data
+  conf
+  redis-data
+  nginx
+  docker-compose.yml
+  Dockerfile
+  docker
+  README.md

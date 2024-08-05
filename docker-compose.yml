@@ -1,25 +1,71 @@
 version: "3.9"
 
 services:
-  backend:
+  backend1:
     build:
       dockerfile: Dockerfile
-      context: ./app
-    ports: 
-      - "8081:8080"
+      context: .
     image: goback
-    container_name: app
+    container_name: app1
     depends_on:
       - postgres
       - redis
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
       interval: 30s
       timeout: 10s
       retries: 3
     restart: unless-stopped
     networks:
         - dev
+
+  backend2:
+    build:
+      dockerfile: Dockerfile
+      context: .
+    image: goback
+    container_name: app2
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - dev
+
+  backend3:
+    build:
+      dockerfile: Dockerfile
+      context: .
+    image: goback
+    container_name: app3
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - dev
   
   postgres:
     image: postgres:12.19-bullseye
@@ -32,7 +78,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - ./config/postgres.conf:/usr/local/etc/postgres/postgres.conf
+      - ./conf/postgres.conf:/usr/local/etc/postgres/postgres.conf
       - postgres-init:/docker-entrypoint-initdb.d
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
@@ -71,11 +117,25 @@ services:
     networks:
       - dev
 
+  nginx:
+    build:
+      dockerfile: NginxDockerfile
+      context: ./nginx
+    depends_on:
+      - backend1
+      - backend2
+      - backend3
+    ports:
+      - "80:80"
+    restart: always
+    networks:
+      - dev
+
 
 volumes:
   postgres-init:
   postgres-data:
-  config:
+  conf:
   redis-data:
   
 networks:
