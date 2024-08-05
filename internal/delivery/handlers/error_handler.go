@@ -31,22 +31,26 @@ const (
 	CreateFlatError
 	UpdateFlatError
 	SubscribeOnHouseError
+	NoAccessError
+	ExtractRoleFromTokenError
 )
 
 const (
-	ReadHTTPBodyMsg           = "can't read request"
-	UnmarshalHTTPBodyMsg      = "can't unmarshal request"
-	CreateHouseErrorMsg       = "can't create house"
-	MarshalHTTPBodyErrorMsg   = "can't marshal response"
-	ParseURLErrorMsg          = "can't parse url"
-	GetFlatsByHouseIDErrorMsg = "can't get flats by house id"
-	NotAuthorizedErrorMsg     = "not authorized"
-	RegisterUserErrorMsg      = "can't register user"
-	LoginUserErrorMsg         = "can't login user"
-	DummyLoginErrorMsg        = "can't simple login"
-	CreateFlatErrorMsg        = "can't create flat"
-	UpdateFlatErrorMsg        = "can't update flat"
-	SubscribeOnHouseErrorMsg  = "can't subscribe on house"
+	ReadHTTPBodyMsg              = "can't read request"
+	UnmarshalHTTPBodyMsg         = "can't unmarshal request"
+	CreateHouseErrorMsg          = "can't create house"
+	MarshalHTTPBodyErrorMsg      = "can't marshal response"
+	ParseURLErrorMsg             = "can't parse url"
+	GetFlatsByHouseIDErrorMsg    = "can't get flats by house id"
+	NotAuthorizedErrorMsg        = "not authorized"
+	RegisterUserErrorMsg         = "can't register user"
+	LoginUserErrorMsg            = "can't login user"
+	DummyLoginErrorMsg           = "can't simple login"
+	CreateFlatErrorMsg           = "can't create flat"
+	UpdateFlatErrorMsg           = "can't update flat"
+	SubscribeOnHouseErrorMsg     = "can't subscribe on house"
+	NoAccessErrorMsg             = "no enough access rights"
+	ExtractRoleFromTokenErrorMsg = "can't extract role"
 )
 
 func CreateErrorResponse(ctx context.Context, errCode int, msg string) []byte {

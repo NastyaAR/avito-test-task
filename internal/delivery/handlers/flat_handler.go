@@ -5,6 +5,7 @@ import (
 	"avito-test-task/pkg"
 	"context"
 	"encoding/json"
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 	"io"
 	"net/http"
@@ -51,7 +52,15 @@ func (h *FlatHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID, err := pkg.ExtractUserIDFromToken(r.Header.Get("authorization"))
+	userID, err := pkg.ExtractPayloadFromToken(r.Header.Get("authorization"), "userID")
+	if err != nil {
+		h.lg.Warn("flat handler: create error: extract id", zap.Error(err))
+		respBody = CreateErrorResponse(r.Context(), CreateFlatError, CreateFlatErrorMsg)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(respBody)
+		return
+	}
+	userUuid, err := uuid.Parse(userID)
 	if err != nil {
 		h.lg.Warn("flat handler: create error: extract id", zap.Error(err))
 		respBody = CreateErrorResponse(r.Context(), CreateFlatError, CreateFlatErrorMsg)
@@ -60,10 +69,10 @@ func (h *FlatHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), h.dbTimeout*time.Second)
 	defer cancel()
 
-	flatResponse, err = h.uc.Create(ctx, userID, &flatRequest, h.lg)
+	flatResponse, err = h.uc.Create(ctx, userUuid, &flatRequest, h.lg)
 	if err != nil {
 		h.lg.Warn("flat handler: create error", zap.Error(err))
 		respBody = CreateErrorResponse(r.Context(), CreateFlatError, CreateFlatErrorMsg)
@@ -125,7 +134,7 @@ func (h *FlatHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	addDefaultValues(&flatRequest, body)
-	userID, err := pkg.ExtractUserIDFromToken(r.Header.Get("authorization"))
+	userID, err := pkg.ExtractPayloadFromToken(r.Header.Get("authorization"), "userID")
 	if err != nil {
 		h.lg.Warn("flat handler: create error", zap.Error(err))
 		respBody = CreateErrorResponse(r.Context(), CreateFlatError, CreateFlatErrorMsg)
@@ -133,11 +142,19 @@ func (h *FlatHandler) Update(w http.ResponseWriter, r *http.Request) {
 		w.Write(respBody)
 		return
 	}
+	userUuid, err := uuid.Parse(userID)
+	if err != nil {
+		h.lg.Warn("flat handler: create error: extract id", zap.Error(err))
+		respBody = CreateErrorResponse(r.Context(), CreateFlatError, CreateFlatErrorMsg)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(respBody)
+		return
+	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), h.dbTimeout*time.Second)
 	defer cancel()
 
-	flatResponse, err = h.uc.Update(ctx, userID, &flatRequest, h.lg)
+	flatResponse, err = h.uc.Update(ctx, userUuid, &flatRequest, h.lg)
 	if err != nil {
 		h.lg.Warn("flat handler: update error", zap.Error(err))
 		respBody = CreateErrorResponse(r.Context(), UpdateFlatError, UpdateFlatErrorMsg)

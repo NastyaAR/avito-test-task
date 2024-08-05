@@ -41,30 +41,31 @@ func Run(cfg *config.Config) {
 	done := make(chan bool, 1)
 	houseRepo := repo.NewPostgresHouseRepo(pool)
 	houseUsecase := usecase.NewHouseUsecase(houseRepo, notifySender, notifyRepo, done,
-		50*time.Second, time.Second*5, lg)
-	houseHandler := handlers.NewHouseHandler(houseUsecase, time.Duration(cfg.DbTimeoutSec), lg)
+		5*time.Second, time.Duration(cfg.DbTimeoutSec)*time.Second, lg)
+	houseHandler := handlers.NewHouseHandler(houseUsecase, time.Duration(cfg.DbTimeoutSec)*time.Second, lg)
 
 	userRepo := repo.NewPostrgesUserRepo(pool)
 	userUsecase := usecase.NewUserUsecase(userRepo)
-	userHandler := handlers.NewUserHandler(userUsecase, time.Duration(cfg.DbTimeoutSec), lg)
+	userHandler := handlers.NewUserHandler(userUsecase, time.Duration(cfg.DbTimeoutSec)*time.Second, lg)
 
 	flatRepo := repo.NewPostgresFlatRepo(pool)
 	flatUsecase := usecase.NewFlatUsecase(flatRepo)
-	flatHandler := handlers.NewFlatHandler(flatUsecase, time.Duration(cfg.DbTimeoutSec), lg)
+	flatHandler := handlers.NewFlatHandler(flatUsecase, time.Duration(cfg.DbTimeoutSec)*time.Second, lg)
 
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
 	r.Use(middleware.Recoverer)
 
-	r.Post("/house/create", houseHandler.Create)
-	r.Get("/house/{id}", houseHandler.GetFlatsByID)
+	r.Post("/house/create", mdware.AuthMiddleware(mdware.AccessMiddleware(houseHandler.Create)))
+	r.Get("/house/{id}", mdware.AuthMiddleware(houseHandler.GetFlatsByID))
 	r.Get("/dummyLogin", userHandler.DummyLogin)
 	r.Post("/register", userHandler.Register)
 	r.Post("/login", userHandler.Login)
-	r.Post("/flat/update", flatHandler.Update)
+	r.Post("/flat/update", mdware.AuthMiddleware(mdware.AccessMiddleware(flatHandler.Update)))
 	r.Post("/flat/create", mdware.AuthMiddleware(flatHandler.Create))
-	r.Post("/house/{id}/subscribe", houseHandler.Subscribe)
+	r.Post("/house/{id}/subscribe", mdware.AuthMiddleware(houseHandler.Subscribe))
 
+	fmt.Println("done")
 	err = http.ListenAndServe(":8081", r)
 	if err != nil {
 		fmt.Println(err)

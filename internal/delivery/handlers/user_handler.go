@@ -49,7 +49,7 @@ func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), h.dbTimeout*time.Second)
 	defer cancel()
 
 	registerResponse, err = h.uc.Register(ctx, &registerRequest, h.lg)
@@ -99,7 +99,7 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), h.dbTimeout*time.Second)
 	defer cancel()
 
 	loginResponse, err = h.uc.Login(ctx, &loginRequest, h.lg)
@@ -133,7 +133,7 @@ func (h *UserHandler) DummyLogin(w http.ResponseWriter, r *http.Request) {
 
 	userType = r.URL.Query().Get("user_type")
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), h.dbTimeout*time.Second)
 	defer cancel()
 
 	dummyLoginResponse, err := h.uc.DummyLogin(ctx, userType, h.lg)

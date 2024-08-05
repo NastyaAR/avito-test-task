@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/google/uuid"
 	"io"
 	"net/http"
 	"strconv"
@@ -51,7 +52,7 @@ func (h *HouseHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), h.dbTimeout*time.Second)
 	defer cancel()
 
 	houseResponse, err = h.uc.Create(ctx, &houseRequest, h.lg)
@@ -92,7 +93,7 @@ func (h *HouseHandler) GetFlatsByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), h.dbTimeout*time.Second)
 	defer cancel()
 
 	flats, err := h.uc.GetFlatsByHouseID(ctx, id, domain.AnyStatus, h.lg)
@@ -124,10 +125,18 @@ func (h *HouseHandler) Subscribe(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println(r.URL.Path)
 
-	userID, err := pkg.ExtractUserIDFromToken(r.Header.Get("authorization"))
+	userID, err := pkg.ExtractPayloadFromToken(r.Header.Get("authorization"), "userID")
 	if err != nil {
-		h.lg.Warn("flat handler: subscribe error", zap.Error(err))
+		h.lg.Warn("house handler: subscribe error", zap.Error(err))
 		respBody = CreateErrorResponse(r.Context(), SubscribeOnHouseError, SubscribeOnHouseErrorMsg)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(respBody)
+		return
+	}
+	userUuid, err := uuid.Parse(userID)
+	if err != nil {
+		h.lg.Warn("house handler: create error: extract id", zap.Error(err))
+		respBody = CreateErrorResponse(r.Context(), CreateFlatError, CreateFlatErrorMsg)
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write(respBody)
 		return
@@ -144,10 +153,10 @@ func (h *HouseHandler) Subscribe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), h.dbTimeout*time.Second)
 	defer cancel()
 
-	err = h.uc.SubscribeByID(ctx, id, userID, h.lg)
+	err = h.uc.SubscribeByID(ctx, id, userUuid, h.lg)
 	if err != nil {
 		h.lg.Warn("house handler: subscribe error", zap.Error(err))
 		respBody = CreateErrorResponse(r.Context(), SubscribeOnHouseError, SubscribeOnHouseErrorMsg)

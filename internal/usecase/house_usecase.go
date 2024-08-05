@@ -24,7 +24,7 @@ func NewHouseUsecase(houseRepo domain.HouseRepo, notifySender domain.NotifySende
 		notifyRepo:   notifyRepo,
 	}
 
-	houseUsecase.Notifying(done, freq, timeout, lg)
+	go houseUsecase.Notifying(done, freq, timeout, lg)
 
 	return &houseUsecase
 }
