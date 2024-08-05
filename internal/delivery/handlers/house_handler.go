@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"avito-test-task/internal/domain"
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -35,25 +36,28 @@ func (h *HouseHandler) Create(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		h.lg.Warn("read http body error")
 		respBody = CreateErrorResponse(r.Context(), ReadHTTPBodyError, ReadHTTPBodyMsg)
-		w.Write(respBody)
 		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(respBody)
 		return
 	}
 	err = json.Unmarshal(body, &houseRequest)
 	if err != nil {
 		h.lg.Warn("unmarshal request body error")
 		respBody = CreateErrorResponse(r.Context(), UnmarshalHTTPBodyError, UnmarshalHTTPBodyMsg)
-		w.Write(respBody)
 		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(respBody)
 		return
 	}
 
-	houseResponse, err = h.uc.Create(&houseRequest, h.lg)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	houseResponse, err = h.uc.Create(ctx, &houseRequest, h.lg)
 	if err != nil {
 		h.lg.Warn("house handler: create error", zap.Error(err))
 		respBody = CreateErrorResponse(r.Context(), CreateHouseError, CreateHouseErrorMsg)
-		w.Write(respBody)
 		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(respBody)
 		return
 	}
 
@@ -61,13 +65,12 @@ func (h *HouseHandler) Create(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		h.lg.Warn("house handler: create error", zap.Error(err))
 		respBody = CreateErrorResponse(r.Context(), MarshalHTTPBodyError, MarshalHTTPBodyErrorMsg)
-		w.Write(respBody)
 		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(respBody)
 		return
 	}
 
 	w.Write(respBody)
-	w.WriteHeader(http.StatusOK)
 }
 
 func (h *HouseHandler) GetFlatsByID(w http.ResponseWriter, r *http.Request) {
@@ -82,17 +85,20 @@ func (h *HouseHandler) GetFlatsByID(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		h.lg.Warn("house handler: get flats by id error", zap.Error(err))
 		respBody = CreateErrorResponse(r.Context(), ParseURLError, ParseURLErrorMsg)
-		w.Write(respBody)
 		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(respBody)
 		return
 	}
 
-	flats, err := h.uc.GetFlatsByHouseID(id, domain.AnyStatus, h.lg)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	flats, err := h.uc.GetFlatsByHouseID(ctx, id, domain.AnyStatus, h.lg)
 	if err != nil {
 		h.lg.Warn("house handler: get flats by id error", zap.Error(err))
 		respBody = CreateErrorResponse(r.Context(), GetFlatsByHouseIDError, GetFlatsByHouseIDErrorMsg)
-		w.Write(respBody)
 		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(respBody)
 		return
 	}
 
@@ -100,11 +106,10 @@ func (h *HouseHandler) GetFlatsByID(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		h.lg.Warn("house handler: get flats by id error", zap.Error(err))
 		respBody = CreateErrorResponse(r.Context(), MarshalHTTPBodyError, MarshalHTTPBodyErrorMsg)
-		w.Write(respBody)
 		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(respBody)
 		return
 	}
 
 	w.Write(respBody)
-	w.WriteHeader(http.StatusOK)
 }

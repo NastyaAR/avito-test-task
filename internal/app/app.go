@@ -3,6 +3,7 @@ package app
 import (
 	"avito-test-task/config"
 	"avito-test-task/internal/delivery/handlers"
+	mdware "avito-test-task/internal/delivery/middleware"
 	"avito-test-task/internal/repo"
 	"avito-test-task/internal/usecase"
 	"avito-test-task/pkg"
@@ -55,7 +56,7 @@ func Run(cfg *config.Config) {
 	r.Post("/register", userHandler.Register)
 	r.Post("/login", userHandler.Login)
 	r.Post("/flat/update", flatHandler.Update)
-	r.Post("/flat/create", flatHandler.Create)
+	r.Post("/flat/create", mdware.AuthMiddleware(flatHandler.Create))
 
 	err = http.ListenAndServe(":8081", r)
 	if err != nil {

@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
@@ -18,6 +19,7 @@ const DefaultEmptyFlatValue = -1
 type Flat struct {
 	ID          int
 	HouseID     int
+	UserID      uuid.UUID
 	Price       int
 	Rooms       int
 	Status      string
@@ -54,8 +56,8 @@ type CreateFlatResponse struct {
 }
 
 type FlatUsecase interface {
-	Create(ctx context.Context, flatReq *CreateFlatRequest, lg *zap.Logger) (CreateFlatResponse, error)
-	Update(ctx context.Context, newFlatData *UpdateFlatRequest, lg *zap.Logger) (CreateFlatResponse, error)
+	Create(ctx context.Context, userID uuid.UUID, flatReq *CreateFlatRequest, lg *zap.Logger) (CreateFlatResponse, error)
+	Update(ctx context.Context, userID uuid.UUID, newFlatData *UpdateFlatRequest, lg *zap.Logger) (CreateFlatResponse, error)
 }
 
 type FlatRepo interface {

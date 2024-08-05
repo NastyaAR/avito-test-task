@@ -21,7 +21,7 @@ func NewHouseUsecase(houseRepo domain.HouseRepo, dbTimeout time.Duration) *House
 	}
 }
 
-func (u *HouseUsecase) Create(req *domain.CreateHouseRequest, lg *zap.Logger) (domain.CreateHouseResponse, error) {
+func (u *HouseUsecase) Create(ctx context.Context, req *domain.CreateHouseRequest, lg *zap.Logger) (domain.CreateHouseResponse, error) {
 	lg.Info("user usecase: create")
 
 	date := time.Now()
@@ -34,9 +34,6 @@ func (u *HouseUsecase) Create(req *domain.CreateHouseRequest, lg *zap.Logger) (d
 		CreateHouseDate: date,
 		UpdateFlatDate:  date,
 	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), u.dbTimeout)
-	defer cancel()
 
 	house, err := u.houseRepo.Create(ctx, &house, lg)
 	if err != nil {
@@ -56,7 +53,7 @@ func (u *HouseUsecase) Create(req *domain.CreateHouseRequest, lg *zap.Logger) (d
 	return houseResponse, nil
 }
 
-func (u *HouseUsecase) GetFlatsByHouseID(id int, status string, lg *zap.Logger) (domain.FlatsByHouseResponse, error) {
+func (u *HouseUsecase) GetFlatsByHouseID(ctx context.Context, id int, status string, lg *zap.Logger) (domain.FlatsByHouseResponse, error) {
 	if id < 0 {
 		lg.Warn("house usecase: get flats by house id error: nil request")
 		return domain.FlatsByHouseResponse{}, errors.New("house usecase: get flats by house id error: nil request")
@@ -66,9 +63,6 @@ func (u *HouseUsecase) GetFlatsByHouseID(id int, status string, lg *zap.Logger) 
 		lg.Warn("house usecase: get flats by house id error: bad status", zap.String("status", status))
 		return domain.FlatsByHouseResponse{}, errors.New("house usecase: get flats by house id error: bad status")
 	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), u.dbTimeout)
-	defer cancel()
 
 	flats, err := u.houseRepo.GetFlatsByHouseID(ctx, id, lg)
 	if err != nil {
@@ -95,4 +89,40 @@ func (u *HouseUsecase) GetFlatsByHouseID(id int, status string, lg *zap.Logger) 
 	}
 
 	return domain.FlatsByHouseResponse{flatsArr}, nil
+}
+
+func (uc *HouseUsecase) SubscribeByID(ctx context.Context, id int, req *domain.SubscribeOnHouseRequest, lg *zap.Logger) error {
+	lg.Info("house usecase: subscribe by id")
+
+	err := uc.houseRepo.SubscribeByID(ctx, id, req.Mail, lg)
+	if err != nil {
+		lg.Warn("house usecase: subscribe by id", zap.Error(err))
+		return fmt.Errorf("house usecase: subscribe by id: %v", err.Error())
+	}
+
+	return nil
+}
+
+func (uc *HouseUsecase) Subscribing(done chan bool, frequency time.Duration, lg *zap.Logger) {
+	for {
+		select {
+		case <-done:
+			lg.Warn("house usecase: subscribing goroutine exited")
+			return
+		default:
+			lg.Info("house usecase: subscribing goroutine working")
+			ctx, cancel := context.WithTimeout(context.Background(), uc.dbTimeout)
+			defer cancel()
+
+			reqs, err := uc.
+			if err != nil {
+				lg.Warnf("pay adapter: paying error: %v", err.Error())
+			}
+
+			for _, req := range reqs {
+
+			}
+			time.Sleep(frequency)
+		}
+	}
 }

@@ -139,3 +139,7 @@ func (p *PostgresHouseRepo) GetFlatsByHouseID(ctx context.Context, id int, lg *z
 
 	return flats, err
 }
+
+func (p *PostgresHouseRepo) SubscribeByID(ctx context.Context, id int, email string, lg *zap.Logger) error {
+	
+}

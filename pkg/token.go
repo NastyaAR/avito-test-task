@@ -19,3 +19,26 @@ func GenerateJWTToken(userId uuid.UUID, role string) (string, error) {
 
 	return tokenString, nil
 }
+
+func ValidateJWTToken(tokenString string) (*jwt.MapClaims, error) {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		return []byte("some key"), nil
+	})
+
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		return &claims, nil
+	}
+	return nil, err
+}
+
+func ExtractUserIDFromToken(tokenString string) (uuid.UUID, error) {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		return uuid.Nil, nil
+	})
+
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		return claims["userID"].(uuid.UUID), nil
+	}
+
+	return uuid.Nil, err
+}

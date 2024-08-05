@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"avito-test-task/internal/domain"
+	"avito-test-task/pkg"
 	"context"
 	"encoding/json"
 	"go.uber.org/zap"
@@ -37,28 +38,37 @@ func (h *FlatHandler) Create(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		h.lg.Warn("flat handler: create error", zap.Error(err))
 		respBody = CreateErrorResponse(r.Context(), ReadHTTPBodyError, ReadHTTPBodyMsg)
-		w.Write(respBody)
 		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(respBody)
 		return
 	}
 	err = json.Unmarshal(body, &flatRequest)
 	if err != nil {
 		h.lg.Warn("flat handler: create error", zap.Error(err))
 		respBody = CreateErrorResponse(r.Context(), UnmarshalHTTPBodyError, UnmarshalHTTPBodyMsg)
-		w.Write(respBody)
 		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(respBody)
+		return
+	}
+
+	userID, err := pkg.ExtractUserIDFromToken(r.Header.Get("authorization"))
+	if err != nil {
+		h.lg.Warn("flat handler: create error", zap.Error(err))
+		respBody = CreateErrorResponse(r.Context(), CreateFlatError, CreateFlatErrorMsg)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(respBody)
 		return
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	flatResponse, err = h.uc.Create(ctx, &flatRequest, h.lg)
+	flatResponse, err = h.uc.Create(ctx, userID, &flatRequest, h.lg)
 	if err != nil {
 		h.lg.Warn("flat handler: create error", zap.Error(err))
 		respBody = CreateErrorResponse(r.Context(), CreateFlatError, CreateFlatErrorMsg)
-		w.Write(respBody)
 		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(respBody)
 		return
 	}
 
@@ -66,13 +76,12 @@ func (h *FlatHandler) Create(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		h.lg.Warn("flat handler: create error", zap.Error(err))
 		respBody = CreateErrorResponse(r.Context(), MarshalHTTPBodyError, MarshalHTTPBodyErrorMsg)
-		w.Write(respBody)
 		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(respBody)
 		return
 	}
 
 	w.Write(respBody)
-	w.WriteHeader(http.StatusOK)
 }
 
 func addDefaultValues(flatRequest *domain.UpdateFlatRequest, body []byte) {
@@ -102,30 +111,38 @@ func (h *FlatHandler) Update(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		h.lg.Warn("flat handler: update error", zap.Error(err))
 		respBody = CreateErrorResponse(r.Context(), ReadHTTPBodyError, ReadHTTPBodyMsg)
-		w.Write(respBody)
 		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(respBody)
 		return
 	}
 	err = json.Unmarshal(body, &flatRequest)
 	if err != nil {
 		h.lg.Warn("flat handler: update error", zap.Error(err))
 		respBody = CreateErrorResponse(r.Context(), UnmarshalHTTPBodyError, UnmarshalHTTPBodyMsg)
-		w.Write(respBody)
 		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(respBody)
 		return
 	}
 
 	addDefaultValues(&flatRequest, body)
+	userID, err := pkg.ExtractUserIDFromToken(r.Header.Get("authorization"))
+	if err != nil {
+		h.lg.Warn("flat handler: create error", zap.Error(err))
+		respBody = CreateErrorResponse(r.Context(), CreateFlatError, CreateFlatErrorMsg)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(respBody)
+		return
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	flatResponse, err = h.uc.Update(ctx, &flatRequest, h.lg)
+	flatResponse, err = h.uc.Update(ctx, userID, &flatRequest, h.lg)
 	if err != nil {
 		h.lg.Warn("flat handler: update error", zap.Error(err))
 		respBody = CreateErrorResponse(r.Context(), UpdateFlatError, UpdateFlatErrorMsg)
-		w.Write(respBody)
 		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(respBody)
 		return
 	}
 
@@ -133,11 +150,10 @@ func (h *FlatHandler) Update(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		h.lg.Warn("flat handler: update error", zap.Error(err))
 		respBody = CreateErrorResponse(r.Context(), MarshalHTTPBodyError, MarshalHTTPBodyErrorMsg)
-		w.Write(respBody)
 		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(respBody)
 		return
 	}
 
 	w.Write(respBody)
-	w.WriteHeader(http.StatusOK)
 }

@@ -2,26 +2,31 @@ package middleware
 
 import (
 	"avito-test-task/internal/delivery/handlers"
+	"avito-test-task/pkg"
+	"fmt"
 	"net/http"
 )
 
-func AuthMiddleware(handler http.Handler) http.Handler {
+func AuthMiddleware(handler http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var respBoby []byte
-		_, err := r.Cookie("token")
-		if err != nil {
-			respBoby = handlers.CreateErrorResponse(r.Context(), handlers.ReadCookieError, handlers.ReadCookieErrorMsg)
-			w.Write(respBoby)
-			w.WriteHeader(http.StatusInternalServerError)
-		}
-		if err == http.ErrNoCookie {
+		token := r.Header.Get("authorization")
+		fmt.Println(token)
+		if token == "" {
 			respBoby = handlers.CreateErrorResponse(r.Context(), handlers.NotAuthorizedError, handlers.NotAuthorizedErrorMsg)
+			w.WriteHeader(http.StatusUnauthorized)
 			w.Write(respBoby)
-			w.WriteHeader(http.StatusInternalServerError)
+			return
 		}
 
-		w.Write([]byte("Response in middleware "))
-		handler.ServeHTTP(w, r)
+		_, err := pkg.ValidateJWTToken(token)
+		if err != nil {
+			respBoby = handlers.CreateErrorResponse(r.Context(), handlers.NotAuthorizedError, handlers.NotAuthorizedErrorMsg)
+			w.WriteHeader(http.StatusUnauthorized)
+			w.Write(respBoby)
+			return
+		}
 
+		handler.ServeHTTP(w, r)
 	})
 }

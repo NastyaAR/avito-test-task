@@ -4,6 +4,7 @@ import (
 	"avito-test-task/internal/domain"
 	"context"
 	"fmt"
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
@@ -20,7 +21,7 @@ func IsCorrectFlatStatus(status string) bool {
 		status == domain.DeclinedStatus || status == domain.AnyStatus
 }
 
-func (u *FlatUsecase) Create(ctx context.Context, flatReq *domain.CreateFlatRequest, lg *zap.Logger) (domain.CreateFlatResponse, error) {
+func (u *FlatUsecase) Create(ctx context.Context, userID uuid.UUID, flatReq *domain.CreateFlatRequest, lg *zap.Logger) (domain.CreateFlatResponse, error) {
 	lg.Info("flat usecase: create")
 
 	if flatReq == nil {
@@ -51,6 +52,7 @@ func (u *FlatUsecase) Create(ctx context.Context, flatReq *domain.CreateFlatRequ
 	flat := domain.Flat{
 		ID:      flatReq.FlatID,
 		HouseID: flatReq.HouseID,
+		UserID:  userID,
 		Price:   flatReq.Price,
 		Rooms:   flatReq.Rooms,
 		Status:  domain.CreatedStatus,
@@ -73,7 +75,7 @@ func (u *FlatUsecase) Create(ctx context.Context, flatReq *domain.CreateFlatRequ
 	return createdFlatResponse, nil
 }
 
-func (u *FlatUsecase) Update(ctx context.Context, newFlatData *domain.UpdateFlatRequest, lg *zap.Logger) (domain.CreateFlatResponse, error) {
+func (u *FlatUsecase) Update(ctx context.Context, userID uuid.UUID, newFlatData *domain.UpdateFlatRequest, lg *zap.Logger) (domain.CreateFlatResponse, error) {
 	lg.Info("flat usecase: update")
 
 	if newFlatData == nil {
@@ -109,6 +111,7 @@ func (u *FlatUsecase) Update(ctx context.Context, newFlatData *domain.UpdateFlat
 	flat := domain.Flat{
 		ID:      newFlatData.ID,
 		HouseID: newFlatData.HouseID,
+		UserID:  userID,
 		Price:   newFlatData.Price,
 		Rooms:   newFlatData.Rooms,
 		Status:  newFlatData.Status,

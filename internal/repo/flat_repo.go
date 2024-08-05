@@ -24,11 +24,27 @@ func (p *PostgresFlatRepo) Create(ctx context.Context, flat *domain.Flat, lg *za
 		createdFlat domain.Flat
 		moderatorId sql.NullInt32
 	)
-	query := `insert into flats(flat_id, house_id, price, rooms, status)
-			values ($1, $2, $3, $4, $5) returning *`
-	err := p.db.QueryRow(ctx, query, flat.ID, flat.HouseID,
+
+	tx, err := p.db.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		lg.Warn("postgres flat repo: create error", zap.Error(err))
+		return domain.Flat{}, fmt.Errorf("postgres flat repo: create error: %v", err.Error())
+	}
+
+	defer func() {
+		if err != nil {
+			rollbackErr := tx.Rollback(ctx)
+			if rollbackErr != nil {
+				err = fmt.Errorf("postgres flat repo: create error: %v", err.Error())
+			}
+		}
+	}()
+
+	query := `insert into flats(flat_id, house_id, user_id, price, rooms, status)
+			values ($1, $2, $3, $4, $5, $6) returning *`
+	err = p.db.QueryRow(ctx, query, flat.ID, flat.HouseID, flat.UserID,
 		flat.Price, flat.Rooms, domain.CreatedStatus).Scan(&createdFlat.ID,
-		&createdFlat.HouseID, &createdFlat.Price, &createdFlat.Rooms,
+		&createdFlat.HouseID, &createdFlat.UserID, &createdFlat.Price, &createdFlat.Rooms,
 		&createdFlat.Status, &moderatorId)
 	if err != nil {
 		lg.Warn("postgres flat repo: create error", zap.Error(err))
@@ -40,14 +56,19 @@ func (p *PostgresFlatRepo) Create(ctx context.Context, flat *domain.Flat, lg *za
 		createdFlat.ModeratorID = int(moderatorId.Int32)
 	}
 
+	if err = tx.Commit(ctx); err != nil {
+		lg.Error("postgres flat repo: create error", zap.Error(err))
+		return domain.Flat{}, fmt.Errorf("postgres flat repo: create error: %v", err.Error())
+	}
+
 	return createdFlat, nil
 }
 
-func (p *PostgresFlatRepo) DeleteByID(ctx context.Context, id int, lg *zap.Logger) error {
+func (p *PostgresFlatRepo) DeleteByID(ctx context.Context, flatID int, houseID int, lg *zap.Logger) error {
 	lg.Info("postgres flat repo: delete by id")
 
-	query := `delete from flats where flat_id=$1`
-	_, err := p.db.Exec(ctx, query, id)
+	query := `delete from flats where flat_id=$1 and house_id=$2`
+	_, err := p.db.Exec(ctx, query, flatID, houseID)
 	if err != nil {
 		lg.Warn("postgres flat repo: delete by id error", zap.Error(err))
 		return fmt.Errorf("postgres flat repo: delete by id error: %v", err.Error())
@@ -141,12 +162,12 @@ func (p *PostgresFlatRepo) Update(ctx context.Context, newFlatData *domain.Flat,
 	return flat, nil
 }
 
-func (p *PostgresFlatRepo) GetByID(ctx context.Context, id int, lg *zap.Logger) (domain.Flat, error) {
+func (p *PostgresFlatRepo) GetByID(ctx context.Context, flatID int, houseID int, lg *zap.Logger) (domain.Flat, error) {
 	var flat domain.Flat
 	lg.Info("postgres flat repo: get by id")
 
-	query := `select * from flats where flat_id=$1`
-	err := p.db.QueryRow(ctx, query, id).Scan(&flat.ID, &flat.HouseID,
+	query := `select * from flats where flat_id=$1 and house_id=$2`
+	err := p.db.QueryRow(ctx, query, flatID, houseID).Scan(&flat.ID, &flat.HouseID, &flat.UserID,
 		&flat.Price, &flat.Rooms,
 		&flat.Status, &flat.ModeratorID)
 	if err != nil {

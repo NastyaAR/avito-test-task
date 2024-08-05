@@ -47,9 +47,14 @@ type SingleFlatResponse struct {
 	Status  string `json:"status"`
 }
 
+type SubscribeOnHouseRequest struct {
+	Mail string `json:"email"`
+}
+
 type HouseUsecase interface {
-	Create(req *CreateHouseRequest, lg *zap.Logger) (CreateHouseResponse, error)
-	GetFlatsByHouseID(id int, status string, lg *zap.Logger) (FlatsByHouseResponse, error)
+	Create(ctx context.Context, req *CreateHouseRequest, lg *zap.Logger) (CreateHouseResponse, error)
+	GetFlatsByHouseID(ctx context.Context, id int, status string, lg *zap.Logger) (FlatsByHouseResponse, error)
+	SubscribeByID(ctx context.Context, id int, req *SubscribeOnHouseRequest, lg *zap.Logger) error
 }
 
 type HouseRepo interface {
@@ -59,4 +64,5 @@ type HouseRepo interface {
 	GetByID(ctx context.Context, id int, lg *zap.Logger) (House, error)
 	GetAll(ctx context.Context, offset int, limit int, lg *zap.Logger) ([]House, error)
 	GetFlatsByHouseID(ctx context.Context, id int, lg *zap.Logger) ([]Flat, error)
+	SubscribeByID(ctx context.Context, id int, email string, lg *zap.Logger) error
 }

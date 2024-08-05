@@ -36,16 +36,16 @@ func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		h.lg.Warn("user handler: register error", zap.Error(err))
 		respBody = CreateErrorResponse(r.Context(), ReadHTTPBodyError, ReadHTTPBodyMsg)
-		w.Write(respBody)
 		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(respBody)
 		return
 	}
 	err = json.Unmarshal(body, &registerRequest)
 	if err != nil {
 		h.lg.Warn("user handler: register error", zap.Error(err))
 		respBody = CreateErrorResponse(r.Context(), UnmarshalHTTPBodyError, UnmarshalHTTPBodyMsg)
-		w.Write(respBody)
 		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(respBody)
 		return
 	}
 
@@ -56,8 +56,8 @@ func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		h.lg.Warn("user handler: register error", zap.Error(err))
 		respBody = CreateErrorResponse(r.Context(), RegisterUserError, RegisterUserErrorMsg)
-		w.Write(respBody)
 		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(respBody)
 		return
 	}
 
@@ -65,13 +65,12 @@ func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		h.lg.Warn("user handler: register error", zap.Error(err))
 		respBody = CreateErrorResponse(r.Context(), MarshalHTTPBodyError, MarshalHTTPBodyErrorMsg)
-		w.Write(respBody)
 		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(respBody)
 		return
 	}
 
 	w.Write(respBody)
-	w.WriteHeader(http.StatusOK)
 }
 
 func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
@@ -86,8 +85,8 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		h.lg.Warn("user handler: login error", zap.Error(err))
 		respBody = CreateErrorResponse(r.Context(), ReadHTTPBodyError, ReadHTTPBodyMsg)
-		w.Write(respBody)
 		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(respBody)
 		return
 	}
 
@@ -95,8 +94,8 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		h.lg.Warn("user handler: login error", zap.Error(err))
 		respBody = CreateErrorResponse(r.Context(), UnmarshalHTTPBodyError, UnmarshalHTTPBodyMsg)
-		w.Write(respBody)
 		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(respBody)
 		return
 	}
 
@@ -107,8 +106,8 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		h.lg.Warn("user handler: login error", zap.Error(err))
 		respBody = CreateErrorResponse(r.Context(), LoginUserError, LoginUserErrorMsg)
-		w.Write(respBody)
 		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(respBody)
 		return
 	}
 
@@ -116,13 +115,12 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		h.lg.Warn("user handler: register error", zap.Error(err))
 		respBody = CreateErrorResponse(r.Context(), MarshalHTTPBodyError, MarshalHTTPBodyErrorMsg)
-		w.Write(respBody)
 		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(respBody)
 		return
 	}
 
 	w.Write(respBody)
-	w.WriteHeader(http.StatusOK)
 }
 
 func (h *UserHandler) DummyLogin(w http.ResponseWriter, r *http.Request) {
@@ -142,8 +140,8 @@ func (h *UserHandler) DummyLogin(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		h.lg.Warn("user handler: dummy login error", zap.Error(err))
 		respBody = CreateErrorResponse(r.Context(), DummyLoginError, DummyLoginErrorMsg)
-		w.Write(respBody)
 		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(respBody)
 		return
 	}
 
@@ -151,11 +149,10 @@ func (h *UserHandler) DummyLogin(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		h.lg.Warn("user handler: register error", zap.Error(err))
 		respBody = CreateErrorResponse(r.Context(), MarshalHTTPBodyError, MarshalHTTPBodyErrorMsg)
-		w.Write(respBody)
 		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(respBody)
 		return
 	}
 
 	w.Write(respBody)
-	w.WriteHeader(http.StatusOK)
 }
