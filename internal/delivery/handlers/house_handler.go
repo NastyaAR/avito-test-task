@@ -87,7 +87,7 @@ func (h *HouseHandler) GetFlatsByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	flats, err := h.uc.GetFlatsByHouseID(id, r.Header.Get("status"), h.lg)
+	flats, err := h.uc.GetFlatsByHouseID(id, domain.AnyStatus, h.lg)
 	if err != nil {
 		h.lg.Warn("house handler: get flats by id error", zap.Error(err))
 		respBody = CreateErrorResponse(r.Context(), GetFlatsByHouseIDError, GetFlatsByHouseIDErrorMsg)

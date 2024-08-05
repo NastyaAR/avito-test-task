@@ -19,7 +19,7 @@ create table houses (
 );
 
 create table flats (
-    flat_id serial,
+    flat_id int not null,
     house_id int references houses(house_id),
     price int not null,
     rooms int not null,

@@ -45,7 +45,8 @@ type DummyLoginRequest struct {
 
 type UserUsecase interface {
 	Register(ctx context.Context, userReq *RegisterUserRequest, lg *zap.Logger) (RegisterUserResponse, error)
-	Login(ctx context.Context, userType string, lg *zap.Logger) (LoginUserResponse, error)
+	Login(ctx context.Context, userReq *LoginUserRequest, lg *zap.Logger) (LoginUserResponse, error)
+	DummyLogin(ctx context.Context, userType string, lg *zap.Logger) (LoginUserResponse, error)
 }
 
 type UserRepo interface {

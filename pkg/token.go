@@ -3,6 +3,7 @@ package pkg
 import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+	"time"
 )
 
 func GenerateJWTToken(userId uuid.UUID, role string) (string, error) {
@@ -10,6 +11,7 @@ func GenerateJWTToken(userId uuid.UUID, role string) (string, error) {
 	claims := token.Claims.(jwt.MapClaims)
 	claims["userID"] = userId
 	claims["role"] = role
+	claims["expired_time"] = time.Now().Add(time.Hour * 1).Unix()
 	tokenString, err := token.SignedString([]byte("some key"))
 	if err != nil {
 		return "", err

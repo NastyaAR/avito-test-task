@@ -37,12 +37,25 @@ func Run(cfg *config.Config) {
 	houseUsecase := usecase.NewHouseUsecase(houseRepo, 5*time.Second)
 	houseHandler := handlers.NewHouseHandler(houseUsecase, time.Duration(cfg.DbTimeoutSec), lg)
 
+	userRepo := repo.NewPostrgesUserRepo(pool)
+	userUsecase := usecase.NewUserUsecase(userRepo)
+	userHandler := handlers.NewUserHandler(userUsecase, 5*time.Second, lg)
+
+	flatRepo := repo.NewPostgresFlatRepo(pool)
+	flatUsecase := usecase.NewFlatUsecase(flatRepo)
+	flatHandler := handlers.NewFlatHandler(flatUsecase, 5*time.Second, lg)
+
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
 	r.Use(middleware.Recoverer)
 
 	r.Post("/house/create", houseHandler.Create)
-	r.Get("/house/", houseHandler.GetFlatsByID)
+	r.Get("/house/{id}", houseHandler.GetFlatsByID)
+	r.Get("/dummyLogin", userHandler.DummyLogin)
+	r.Post("/register", userHandler.Register)
+	r.Post("/login", userHandler.Login)
+	r.Post("/flat/update", flatHandler.Update)
+	r.Post("/flat/create", flatHandler.Create)
 
 	err = http.ListenAndServe(":8081", r)
 	if err != nil {

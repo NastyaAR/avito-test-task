@@ -3,6 +3,7 @@ package repo
 import (
 	"avito-test-task/internal/domain"
 	"context"
+	"database/sql"
 	"fmt"
 	"github.com/jackc/pgx/v5"
 	"go.uber.org/zap"
@@ -19,16 +20,24 @@ func NewPostgresFlatRepo(db *pgx.Conn) *PostgresFlatRepo {
 func (p *PostgresFlatRepo) Create(ctx context.Context, flat *domain.Flat, lg *zap.Logger) (domain.Flat, error) {
 	lg.Info("postgres flat repo: create")
 
-	var createdFlat domain.Flat
+	var (
+		createdFlat domain.Flat
+		moderatorId sql.NullInt32
+	)
 	query := `insert into flats(flat_id, house_id, price, rooms, status)
 			values ($1, $2, $3, $4, $5) returning *`
 	err := p.db.QueryRow(ctx, query, flat.ID, flat.HouseID,
 		flat.Price, flat.Rooms, domain.CreatedStatus).Scan(&createdFlat.ID,
 		&createdFlat.HouseID, &createdFlat.Price, &createdFlat.Rooms,
-		&createdFlat.Status)
+		&createdFlat.Status, &moderatorId)
 	if err != nil {
 		lg.Warn("postgres flat repo: create error", zap.Error(err))
 		return domain.Flat{}, fmt.Errorf("postgres flat repo: create error: %v", err.Error())
+	}
+	if !moderatorId.Valid {
+		createdFlat.ModeratorID = 0
+	} else {
+		createdFlat.ModeratorID = int(moderatorId.Int32)
 	}
 
 	return createdFlat, nil

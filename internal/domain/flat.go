@@ -23,6 +23,7 @@ type Flat struct {
 }
 
 type CreateFlatRequest struct {
+	FlatID  int `json:"flat_id"`
 	HouseID int `json:"house_id"`
 	Price   int `json:"price"`
 	Rooms   int `json:"rooms"`
@@ -31,13 +32,13 @@ type CreateFlatRequest struct {
 type UpdateFlatRequest struct {
 	ID      int    `json:"id"`
 	HouseID int    `json:"house_id"`
-	Price   int    `json:"price"`
-	Rooms   int    `json:"rooms"`
-	Status  string `json:"status"`
+	Price   int    `json:"price",omitempty`
+	Rooms   int    `json:"rooms",omitempty`
+	Status  string `json:"status",omitempty`
 }
 
 type CreateFlatResponse struct {
-	ID      int    `json:"id required"`
+	ID      int    `json:"id"`
 	HouseID int    `json:"house_id"`
 	Price   int    `json:"price"`
 	Rooms   int    `json:"rooms"`
