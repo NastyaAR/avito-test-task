@@ -38,17 +38,19 @@ func Run(cfg *config.Config) {
 	notifyRepo := repo.NewPostgresNotifyRepo(pool)
 	notifySender := ports.NewSender()
 
+	done := make(chan bool, 1)
 	houseRepo := repo.NewPostgresHouseRepo(pool)
-	houseUsecase := usecase.NewHouseUsecase(houseRepo, notifySender, notifyRepo, 5*time.Second)
+	houseUsecase := usecase.NewHouseUsecase(houseRepo, notifySender, notifyRepo, done,
+		50*time.Second, time.Second*5, lg)
 	houseHandler := handlers.NewHouseHandler(houseUsecase, time.Duration(cfg.DbTimeoutSec), lg)
 
 	userRepo := repo.NewPostrgesUserRepo(pool)
 	userUsecase := usecase.NewUserUsecase(userRepo)
-	userHandler := handlers.NewUserHandler(userUsecase, 5*time.Second, lg)
+	userHandler := handlers.NewUserHandler(userUsecase, time.Duration(cfg.DbTimeoutSec), lg)
 
 	flatRepo := repo.NewPostgresFlatRepo(pool)
 	flatUsecase := usecase.NewFlatUsecase(flatRepo)
-	flatHandler := handlers.NewFlatHandler(flatUsecase, 5*time.Second, lg)
+	flatHandler := handlers.NewFlatHandler(flatUsecase, time.Duration(cfg.DbTimeoutSec), lg)
 
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
@@ -66,5 +68,5 @@ func Run(cfg *config.Config) {
 	err = http.ListenAndServe(":8081", r)
 	if err != nil {
 		fmt.Println(err)
-	}g
+	}
 }

@@ -14,21 +14,23 @@ type HouseUsecase struct {
 	houseRepo    domain.HouseRepo
 	notifySender domain.NotifySender
 	notifyRepo   domain.NotifyRepo
-	dbTimeout    time.Duration
 }
 
 func NewHouseUsecase(houseRepo domain.HouseRepo, notifySender domain.NotifySender,
-	notifyRepo domain.NotifyRepo, dbTimeout time.Duration) *HouseUsecase {
-	return &HouseUsecase{
+	notifyRepo domain.NotifyRepo, done chan bool, freq time.Duration, timeout time.Duration, lg *zap.Logger) *HouseUsecase {
+	houseUsecase := HouseUsecase{
 		houseRepo:    houseRepo,
 		notifySender: notifySender,
 		notifyRepo:   notifyRepo,
-		dbTimeout:    dbTimeout,
 	}
+
+	houseUsecase.Notifying(done, freq, timeout, lg)
+
+	return &houseUsecase
 }
 
 func (u *HouseUsecase) Create(ctx context.Context, req *domain.CreateHouseRequest, lg *zap.Logger) (domain.CreateHouseResponse, error) {
-	lg.Info("user usecase: create")
+	lg.Info("house usecase: create")
 
 	date := time.Now()
 
@@ -109,7 +111,7 @@ func (uc *HouseUsecase) SubscribeByID(ctx context.Context, id int, userID uuid.U
 	return nil
 }
 
-func (uc *HouseUsecase) Notifying(done chan bool, frequency time.Duration, lg *zap.Logger) {
+func (uc *HouseUsecase) Notifying(done chan bool, frequency time.Duration, timeout time.Duration, lg *zap.Logger) {
 	for {
 		select {
 		case <-done:
@@ -117,7 +119,7 @@ func (uc *HouseUsecase) Notifying(done chan bool, frequency time.Duration, lg *z
 			return
 		default:
 			lg.Info("house usecase: subscribing goroutine working")
-			ctx, cancel := context.WithTimeout(context.Background(), uc.dbTimeout)
+			ctx, cancel := context.WithTimeout(context.Background(), timeout)
 			defer cancel()
 
 			notifies, err := uc.notifyRepo.GetNoSendNotifies(ctx, lg)

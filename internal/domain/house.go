@@ -52,6 +52,7 @@ type HouseUsecase interface {
 	Create(ctx context.Context, req *CreateHouseRequest, lg *zap.Logger) (CreateHouseResponse, error)
 	GetFlatsByHouseID(ctx context.Context, id int, status string, lg *zap.Logger) (FlatsByHouseResponse, error)
 	SubscribeByID(ctx context.Context, id int, userID uuid.UUID, lg *zap.Logger) error
+	Notifying(done chan bool, frequency time.Duration, timeout time.Duration, lg *zap.Logger)
 }
 
 type HouseRepo interface {

@@ -8,4 +8,4 @@ postgres:
     user: ${POSTGRES_USER}
     password: ${POSTGRES_PASSWORD}
     db: ${POSTGRES_DB}
-    db-timeout-sec: 1
+    db-timeout-sec: 10
