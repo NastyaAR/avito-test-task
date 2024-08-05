@@ -56,18 +56,13 @@ func (u *HouseUsecase) Create(req *domain.CreateHouseRequest, lg *zap.Logger) (d
 	return houseResponse, nil
 }
 
-func isCorrectFlatStatus(status string) bool {
-	return status == domain.CreatedStatus || status == domain.ApprovedStatus ||
-		status == domain.DeclinedStatus || status == domain.AnyStatus
-}
-
 func (u *HouseUsecase) GetFlatsByHouseID(id int, status string, lg *zap.Logger) (domain.FlatsByHouseResponse, error) {
 	if id < 0 {
 		lg.Warn("house usecase: get flats by house id error: nil request")
 		return domain.FlatsByHouseResponse{}, errors.New("house usecase: get flats by house id error: nil request")
 	}
 
-	if !isCorrectFlatStatus(status) {
+	if !IsCorrectFlatStatus(status) {
 		lg.Warn("house usecase: get flats by house id error: bad status", zap.String("status", status))
 		return domain.FlatsByHouseResponse{}, errors.New("house usecase: get flats by house id error: bad status")
 	}

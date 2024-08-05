@@ -56,22 +56,85 @@ func (p *PostgresFlatRepo) DeleteByID(ctx context.Context, id int, lg *zap.Logge
 	return nil
 }
 
+func (p *PostgresFlatRepo) updatePrice(ctx context.Context, tx pgx.Tx, flatData *domain.Flat, lg *zap.Logger) error {
+	lg.Info("postgres flat repo: update price")
+	query := `update flats set price=$1 where flat_id=$2 and house_id=$3`
+	_, err := tx.Exec(ctx, query, flatData.Price, flatData.ID, flatData.HouseID)
+	if err != nil {
+		lg.Warn("postgres flat repo: update price error", zap.Error(err))
+		return fmt.Errorf("postgres flat repo: update price error: %v", err.Error())
+	}
+	return nil
+}
+
+func (p *PostgresFlatRepo) updateStatus(ctx context.Context, tx pgx.Tx, flatData *domain.Flat, lg *zap.Logger) error {
+	lg.Info("postgres flat repo: update status")
+	query := `update flats set status=$1 where flat_id=$2 and house_id=$3`
+	_, err := tx.Exec(ctx, query, flatData.Status, flatData.ID, flatData.HouseID)
+	if err != nil {
+		lg.Warn("postgres flat repo: update status error", zap.Error(err))
+		return fmt.Errorf("postgres flat repo: update status error: %v", err.Error())
+	}
+	return nil
+}
+
+func (p *PostgresFlatRepo) updateRooms(ctx context.Context, tx pgx.Tx, flatData *domain.Flat, lg *zap.Logger) error {
+	lg.Info("postgres flat repo: update rooms")
+	query := `update flats set rooms=$1 where flat_id=$2 and house_id=$3`
+	_, err := tx.Exec(ctx, query, flatData.Rooms, flatData.ID, flatData.HouseID)
+	if err != nil {
+		lg.Warn("postgres flat repo: update rooms error", zap.Error(err))
+		return fmt.Errorf("postgres flat repo: update rooms error: %v", err.Error())
+	}
+	return nil
+}
+
 func (p *PostgresFlatRepo) Update(ctx context.Context, newFlatData *domain.Flat, lg *zap.Logger) (domain.Flat, error) {
 	lg.Info("postgres flat repo: update")
 
-	var flat domain.Flat
-	query := `update flats set flat_id=$1,
-								house_id=$2,
-                 				price=$3,
-                 				rooms=$4,
-                 				status=$5
-				returning *`
-	err := p.db.QueryRow(ctx, query, newFlatData.ID, newFlatData.HouseID,
-		newFlatData.Price, newFlatData.Rooms,
-		newFlatData.Status).Scan(&flat.ID, &flat.HouseID,
+	var (
+		flat domain.Flat
+	)
+	tx, err := p.db.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		lg.Warn("postgres flat repo: update error", zap.Error(err))
+		return domain.Flat{}, fmt.Errorf("postgres flat repo: update error: %v", err.Error())
+	}
+
+	defer func() {
+		if err != nil {
+			rollbackErr := tx.Rollback(ctx)
+			if rollbackErr != nil {
+				err = fmt.Errorf("postgres flat repo: update error: %v", err.Error())
+			}
+		}
+	}()
+
+	if newFlatData.Price != domain.DefaultEmptyFlatValue {
+		err = p.updatePrice(ctx, tx,
+			&domain.Flat{ID: newFlatData.ID, HouseID: newFlatData.HouseID, Price: newFlatData.Price}, lg)
+	}
+	if newFlatData.Rooms != domain.DefaultEmptyFlatValue {
+		err = p.updateRooms(ctx, tx,
+			&domain.Flat{ID: newFlatData.ID, HouseID: newFlatData.HouseID, Rooms: newFlatData.Rooms}, lg)
+	}
+	if newFlatData.Status != domain.AnyStatus {
+		err = p.updateStatus(ctx, tx,
+			&domain.Flat{ID: newFlatData.ID, HouseID: newFlatData.HouseID, Status: newFlatData.Status}, lg)
+	}
+
+	query := `select flat_id, house_id, price, rooms, status from flats
+	where flat_id=$1 and house_id=$2`
+
+	err = p.db.QueryRow(ctx, query, newFlatData.ID, newFlatData.HouseID).Scan(&flat.ID, &flat.HouseID,
 		&flat.Price, &flat.Rooms, &flat.Status)
 	if err != nil {
 		lg.Warn("postgres flat repo: update error", zap.Error(err))
+		return domain.Flat{}, fmt.Errorf("postgres flat repo: update error: %v", err.Error())
+	}
+
+	if err = tx.Commit(ctx); err != nil {
+		lg.Error("postgres flat repo: update error", zap.Error(err))
 		return domain.Flat{}, fmt.Errorf("postgres flat repo: update error: %v", err.Error())
 	}
 

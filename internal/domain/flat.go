@@ -13,6 +13,8 @@ const (
 	AnyStatus        = "any"
 )
 
+const DefaultEmptyFlatValue = -1
+
 type Flat struct {
 	ID          int
 	HouseID     int
@@ -20,6 +22,12 @@ type Flat struct {
 	Rooms       int
 	Status      string
 	ModeratorID int
+}
+
+type UpdateFlat struct {
+	ID      int
+	HouseID int
+	Values  map[string]any
 }
 
 type CreateFlatRequest struct {
@@ -32,9 +40,9 @@ type CreateFlatRequest struct {
 type UpdateFlatRequest struct {
 	ID      int    `json:"id"`
 	HouseID int    `json:"house_id"`
-	Price   int    `json:"price",omitempty`
-	Rooms   int    `json:"rooms",omitempty`
-	Status  string `json:"status",omitempty`
+	Price   int    `json:"price,omitempty"`
+	Rooms   int    `json:"rooms,omitempty"`
+	Status  string `json:"status,omitempty"`
 }
 
 type CreateFlatResponse struct {

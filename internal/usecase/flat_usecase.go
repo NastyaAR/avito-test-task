@@ -15,6 +15,11 @@ func NewFlatUsecase(flatRepo domain.FlatRepo) *FlatUsecase {
 	return &FlatUsecase{flatRepo: flatRepo}
 }
 
+func IsCorrectFlatStatus(status string) bool {
+	return status == domain.CreatedStatus || status == domain.ApprovedStatus ||
+		status == domain.DeclinedStatus || status == domain.AnyStatus
+}
+
 func (u *FlatUsecase) Create(ctx context.Context, flatReq *domain.CreateFlatRequest, lg *zap.Logger) (domain.CreateFlatResponse, error) {
 	lg.Info("flat usecase: create")
 
@@ -84,6 +89,21 @@ func (u *FlatUsecase) Update(ctx context.Context, newFlatData *domain.UpdateFlat
 	if newFlatData.HouseID < 1 {
 		lg.Warn("flat usecase: update error: bad house id", zap.Int("house_id", newFlatData.HouseID))
 		return domain.CreateFlatResponse{}, fmt.Errorf("flat usecase: update error: bad house id")
+	}
+
+	if newFlatData.Price != domain.DefaultEmptyFlatValue && newFlatData.Price < 0 {
+		lg.Warn("flat usecase: update error: bad price", zap.Int("price", newFlatData.Price))
+		return domain.CreateFlatResponse{}, fmt.Errorf("flat usecase: update error: bad price")
+	}
+
+	if newFlatData.Rooms != domain.DefaultEmptyFlatValue && newFlatData.Rooms < 1 {
+		lg.Warn("flat usecase: update error: bad rooms", zap.Int("rooms", newFlatData.Rooms))
+		return domain.CreateFlatResponse{}, fmt.Errorf("flat usecase: update error: bad rooms")
+	}
+
+	if newFlatData.Status != domain.AnyStatus && !IsCorrectFlatStatus(newFlatData.Status) {
+		lg.Warn("flat usecase: update error: bad status", zap.String("status", newFlatData.Status))
+		return domain.CreateFlatResponse{}, fmt.Errorf("flat usecase: update error: bad status")
 	}
 
 	flat := domain.Flat{

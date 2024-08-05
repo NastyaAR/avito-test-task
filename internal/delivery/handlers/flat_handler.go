@@ -7,6 +7,7 @@ import (
 	"go.uber.org/zap"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -74,6 +75,19 @@ func (h *FlatHandler) Create(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+func addDefaultValues(flatRequest *domain.UpdateFlatRequest, body []byte) {
+	strBody := string(body)
+	if !strings.Contains(strBody, "price") {
+		flatRequest.Price = domain.DefaultEmptyFlatValue
+	}
+	if !strings.Contains(strBody, "rooms") {
+		flatRequest.Rooms = domain.DefaultEmptyFlatValue
+	}
+	if !strings.Contains(strBody, "status") {
+		flatRequest.Status = domain.AnyStatus
+	}
+}
+
 func (h *FlatHandler) Update(w http.ResponseWriter, r *http.Request) {
 	var (
 		respBody     []byte
@@ -100,6 +114,8 @@ func (h *FlatHandler) Update(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
+	addDefaultValues(&flatRequest, body)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
