@@ -14,8 +14,11 @@ type PostgresUserRepo struct {
 	retryAdapter pkg.IPostgresRetryAdapter
 }
 
-func NewPostrgesUserRepo(db *pgxpool.Pool) *PostgresUserRepo {
-	return &PostgresUserRepo{db: db}
+func NewPostrgesUserRepo(db *pgxpool.Pool, retryAdapter pkg.IPostgresRetryAdapter) *PostgresUserRepo {
+	return &PostgresUserRepo{
+		db:           db,
+		retryAdapter: retryAdapter,
+	}
 }
 
 func (p *PostgresUserRepo) Create(ctx context.Context, user *domain.User, lg *zap.Logger) error {

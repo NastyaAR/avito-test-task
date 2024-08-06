@@ -14,8 +14,11 @@ type PostgresNotifyRepo struct {
 	retryAdapter pkg.IPostgresRetryAdapter
 }
 
-func NewPostgresNotifyRepo(pg *pgxpool.Pool) *PostgresNotifyRepo {
-	return &PostgresNotifyRepo{db: pg}
+func NewPostgresNotifyRepo(pg *pgxpool.Pool, retryAdapter pkg.IPostgresRetryAdapter) *PostgresNotifyRepo {
+	return &PostgresNotifyRepo{
+		db:           pg,
+		retryAdapter: pg,
+	}
 }
 
 func (p *PostgresNotifyRepo) GetNoSendNotifies(ctx context.Context, lg *zap.Logger) ([]domain.Notify, error) {

@@ -37,16 +37,16 @@ func Run(cfg *config.Config) {
 
 	retryAdapter := pkg.NewPostgresRetryAdapter(pool, 3)
 
-	notifyRepo := repo.NewPostgresNotifyRepo(pool)
+	notifyRepo := repo.NewPostgresNotifyRepo(pool, retryAdapter)
 	notifySender := ports.NewSender()
 
 	done := make(chan bool, 1)
-	houseRepo := repo.NewPostgresHouseRepo(pool)
+	houseRepo := repo.NewPostgresHouseRepo(pool, retryAdapter)
 	houseUsecase := usecase.NewHouseUsecase(houseRepo, notifySender, notifyRepo, done,
 		5*time.Second, time.Duration(cfg.DbTimeoutSec)*time.Second, lg)
 	houseHandler := handlers.NewHouseHandler(houseUsecase, time.Duration(cfg.DbTimeoutSec)*time.Second, lg)
 
-	userRepo := repo.NewPostrgesUserRepo(pool)
+	userRepo := repo.NewPostrgesUserRepo(pool, retryAdapter)
 	userUsecase := usecase.NewUserUsecase(userRepo)
 	userHandler := handlers.NewUserHandler(userUsecase, time.Duration(cfg.DbTimeoutSec)*time.Second, lg)
 

@@ -15,8 +15,11 @@ type PostgresHouseRepo struct {
 	retryAdapter pkg.IPostgresRetryAdapter
 }
 
-func NewPostgresHouseRepo(db *pgxpool.Pool) *PostgresHouseRepo {
-	return &PostgresHouseRepo{db: db}
+func NewPostgresHouseRepo(db *pgxpool.Pool, retryAdapter pkg.IPostgresRetryAdapter) *PostgresHouseRepo {
+	return &PostgresHouseRepo{
+		db:           db,
+		retryAdapter: retryAdapter,
+	}
 }
 
 func (p *PostgresHouseRepo) Create(ctx context.Context, house *domain.House, lg *zap.Logger) (domain.House, error) {
