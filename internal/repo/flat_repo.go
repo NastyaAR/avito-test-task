@@ -6,17 +6,18 @@ import (
 	"context"
 	"fmt"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"go.uber.org/zap"
 	"time"
 )
 
 type PostgresFlatRepo struct {
-	db           *pgx.Conn
+	db           *pgxpool.Pool
 	retryAdapter pkg.IPostgresRetryAdapter
 }
 
-func NewPostgresFlatRepo(db *pgx.Conn, retryAdapter pkg.IPostgresRetryAdapter) *PostgresFlatRepo {
+func NewPostgresFlatRepo(db *pgxpool.Pool, retryAdapter pkg.IPostgresRetryAdapter) *PostgresFlatRepo {
 	return &PostgresFlatRepo{
 		db:           db,
 		retryAdapter: retryAdapter,
@@ -93,10 +94,11 @@ func (p *PostgresFlatRepo) Update(ctx context.Context, moderatorID uuid.UUID, ne
 		flat domain.Flat
 	)
 
-	query := `select update_status($1, $2, $3, $4)`
+	query := `select flat_id, house_id, user_id, price, rooms, status 
+	from update_status($1, $2, $3, $4)`
 
 	err := p.retryAdapter.QueryRow(ctx, query, newFlatData.Status,
-		newFlatData.ID, moderatorID).Scan(&flat.ID, &flat.HouseID, &flat.UserID,
+		newFlatData.ID, newFlatData.HouseID, moderatorID).Scan(&flat.ID, &flat.HouseID, &flat.UserID,
 		&flat.Price, &flat.Rooms, &flat.Status)
 	if err != nil {
 		lg.Warn("postgres flat repo: update error", zap.Error(err))

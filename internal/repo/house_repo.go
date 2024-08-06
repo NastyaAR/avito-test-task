@@ -2,18 +2,20 @@ package repo
 
 import (
 	"avito-test-task/internal/domain"
+	"avito-test-task/pkg"
 	"context"
 	"fmt"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"go.uber.org/zap"
 )
 
 type PostgresHouseRepo struct {
-	db *pgx.Conn
+	db           *pgxpool.Pool
+	retryAdapter pkg.IPostgresRetryAdapter
 }
 
-func NewPostgresHouseRepo(db *pgx.Conn) *PostgresHouseRepo {
+func NewPostgresHouseRepo(db *pgxpool.Pool) *PostgresHouseRepo {
 	return &PostgresHouseRepo{db: db}
 }
 
@@ -23,7 +25,7 @@ func (p *PostgresHouseRepo) Create(ctx context.Context, house *domain.House, lg 
 	var createdHouse domain.House
 	query := `insert into houses(address, construct_year, developer, create_house_date, update_flat_date)
 	values ($1, $2, $3, $4, $5) returning *`
-	err := p.db.QueryRow(ctx, query,
+	err := p.retryAdapter.QueryRow(ctx, query,
 		house.Address, house.ConstructYear,
 		house.Developer, house.CreateHouseDate,
 		house.UpdateFlatDate).Scan(&createdHouse.HouseID, &createdHouse.Address,
@@ -41,7 +43,7 @@ func (p *PostgresHouseRepo) DeleteByID(ctx context.Context, id int, lg *zap.Logg
 	lg.Info("delete house", zap.Int("house_id", id))
 
 	query := `delete from houses where id=$1`
-	_, err := p.db.Exec(ctx, query, id)
+	_, err := p.retryAdapter.Exec(ctx, query, id)
 	if err != nil {
 		lg.Warn("postgres house delete error", zap.Error(err))
 		return err
@@ -59,7 +61,7 @@ func (p *PostgresHouseRepo) Update(ctx context.Context, newHouseData *domain.Hou
                   				developer=$4,
                   				create_house_date=$5,
                   				update_flat_date=$6`
-	_, err := p.db.Exec(ctx, query, newHouseData.HouseID, newHouseData.Address,
+	_, err := p.retryAdapter.Exec(ctx, query, newHouseData.HouseID, newHouseData.Address,
 		newHouseData.ConstructYear, newHouseData.Developer,
 		newHouseData.CreateHouseDate, newHouseData.UpdateFlatDate)
 	if err != nil {
@@ -75,7 +77,7 @@ func (p *PostgresHouseRepo) GetByID(ctx context.Context, id int, lg *zap.Logger)
 	var house domain.House
 
 	query := `select * from houses where house_id=$1`
-	err := p.db.QueryRow(ctx, query, id).Scan(&house.HouseID, &house.Address,
+	err := p.retryAdapter.QueryRow(ctx, query, id).Scan(&house.HouseID, &house.Address,
 		&house.ConstructYear, &house.Developer,
 		&house.CreateHouseDate, &house.UpdateFlatDate)
 	if err != nil {
@@ -90,7 +92,7 @@ func (p *PostgresHouseRepo) GetAll(ctx context.Context, offset int, limit int, l
 	lg.Info("get houses", zap.Int("offset", offset), zap.Int("limit", limit))
 
 	query := `select * from houses limit $1 offset $2`
-	rows, err := p.db.Query(ctx, query, limit, offset)
+	rows, err := p.retryAdapter.Query(ctx, query, limit, offset)
 	if err != nil {
 		lg.Warn("postgres house get all error", zap.Error(err))
 		return nil, err
@@ -121,7 +123,7 @@ func (p *PostgresHouseRepo) GetFlatsByHouseID(ctx context.Context, id int, lg *z
 			on flats.house_id = houses.house_id
 			where houses.house_id=$1`
 
-	rows, err := p.db.Query(ctx, query, id)
+	rows, err := p.retryAdapter.Query(ctx, query, id)
 	if err != nil {
 		lg.Warn("postgres house repo: get flats by house id", zap.Error(err))
 		return nil, fmt.Errorf("postgres house repo: get flats by house id: %v", err.Error())
@@ -147,7 +149,7 @@ func (p *PostgresHouseRepo) SubscribeByID(ctx context.Context, houseID int, user
 	fmt.Println(userID)
 
 	query := `insert into subscribers(user_id, house_id) values ($1, $2)`
-	_, err := p.db.Exec(ctx, query, userID, houseID)
+	_, err := p.retryAdapter.Exec(ctx, query, userID, houseID)
 	if err != nil {
 		lg.Warn("postgres house repo: subscribe by id error", zap.Error(err))
 		return fmt.Errorf("postgres house repo: subscribe by id error: %v", err.Error())

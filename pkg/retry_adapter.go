@@ -2,8 +2,9 @@ package pkg
 
 import (
 	"context"
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgconn"
+	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/pgxpool"
 )
 
 type IPostgresRetryAdapter interface {
@@ -13,11 +14,11 @@ type IPostgresRetryAdapter interface {
 }
 
 type PostgresRetryAdapter struct {
-	db              *pgx.Conn
+	db              *pgxpool.Pool
 	numberOfRetries int
 }
 
-func NewPostgresRetryAdapter(db *pgx.Conn, retryNumber int) *PostgresRetryAdapter {
+func NewPostgresRetryAdapter(db *pgxpool.Pool, retryNumber int) *PostgresRetryAdapter {
 	return &PostgresRetryAdapter{
 		db:              db,
 		numberOfRetries: retryNumber,

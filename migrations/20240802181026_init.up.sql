@@ -92,7 +92,7 @@ returns setof flats as $$
 declare
     mod_id uuid;
 begin
-    if new_status == 'on moderation' then
+    if new_status = 'on moderation' then
         select flats.moderator_id into mod_id from flats
         where flats.flat_id=new_flat_id and flats.house_id=new_house_id;
 
