@@ -25,7 +25,7 @@ create table flats (
     price int not null,
     rooms int not null,
     status flat_status not null,
-    moderator_id int,
+    moderator_id uuid references users(user_id),
     primary key (flat_id, house_id)
 );
 
@@ -86,3 +86,23 @@ CREATE TRIGGER insert_subscribe_trigger
     BEFORE INSERT ON subscribers
     FOR EACH ROW
 EXECUTE FUNCTION check_exists_subscriber();
+
+create or replace  function update_status(new_status flat_status, new_flat_id int, new_house_id int, new_moderator_id uuid)
+returns setof flats as $$
+declare
+    mod_id uuid;
+begin
+    if new_status == 'on moderation' then
+        select flats.moderator_id into mod_id from flats
+        where flats.flat_id=new_flat_id and flats.house_id=new_house_id;
+
+        if mod_id != new_moderator_id then
+            raise exception 'flat already on moderation';
+        end if;
+    end if;
+
+    update flats set status=new_status, moderator_id=new_moderator_id
+    where flats.flat_id=new_flat_id and flats.house_id=new_house_id
+    returning flat_id, house_id, user_id, price, rooms, status;
+end;
+$$ language plpgsql;

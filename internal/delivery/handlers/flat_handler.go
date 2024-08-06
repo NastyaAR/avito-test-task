@@ -9,7 +9,6 @@ import (
 	"go.uber.org/zap"
 	"io"
 	"net/http"
-	"strings"
 	"time"
 )
 
@@ -93,19 +92,6 @@ func (h *FlatHandler) Create(w http.ResponseWriter, r *http.Request) {
 	w.Write(respBody)
 }
 
-func addDefaultValues(flatRequest *domain.UpdateFlatRequest, body []byte) {
-	strBody := string(body)
-	if !strings.Contains(strBody, "price") {
-		flatRequest.Price = domain.DefaultEmptyFlatValue
-	}
-	if !strings.Contains(strBody, "rooms") {
-		flatRequest.Rooms = domain.DefaultEmptyFlatValue
-	}
-	if !strings.Contains(strBody, "status") {
-		flatRequest.Status = domain.AnyStatus
-	}
-}
-
 func (h *FlatHandler) Update(w http.ResponseWriter, r *http.Request) {
 	var (
 		respBody     []byte
@@ -133,7 +119,6 @@ func (h *FlatHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	addDefaultValues(&flatRequest, body)
 	userID, err := pkg.ExtractPayloadFromToken(r.Header.Get("authorization"), "userID")
 	if err != nil {
 		h.lg.Warn("flat handler: create error", zap.Error(err))

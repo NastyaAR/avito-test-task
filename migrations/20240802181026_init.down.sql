@@ -1,5 +1,6 @@
 drop trigger if exists flat_create_trigger on flats;
 drop function if exists insert_flat_to_outbox;
+drop function if exists update_status;
 
 drop table if exists new_flats_outbox;
 drop table if exists subscribers;

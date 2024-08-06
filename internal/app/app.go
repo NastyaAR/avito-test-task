@@ -35,6 +35,8 @@ func Run(cfg *config.Config) {
 		log.Fatalf("can't connect to postgresql: %v", err.Error())
 	}
 
+	retryAdapter := pkg.NewPostgresRetryAdapter(pool, 3)
+
 	notifyRepo := repo.NewPostgresNotifyRepo(pool)
 	notifySender := ports.NewSender()
 
@@ -48,7 +50,7 @@ func Run(cfg *config.Config) {
 	userUsecase := usecase.NewUserUsecase(userRepo)
 	userHandler := handlers.NewUserHandler(userUsecase, time.Duration(cfg.DbTimeoutSec)*time.Second, lg)
 
-	flatRepo := repo.NewPostgresFlatRepo(pool)
+	flatRepo := repo.NewPostgresFlatRepo(pool, retryAdapter)
 	flatUsecase := usecase.NewFlatUsecase(flatRepo)
 	flatHandler := handlers.NewFlatHandler(flatUsecase, time.Duration(cfg.DbTimeoutSec)*time.Second, lg)
 

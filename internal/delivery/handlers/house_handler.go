@@ -96,7 +96,23 @@ func (h *HouseHandler) GetFlatsByID(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), h.dbTimeout*time.Second)
 	defer cancel()
 
-	flats, err := h.uc.GetFlatsByHouseID(ctx, id, domain.AnyStatus, h.lg)
+	role, err := pkg.ExtractPayloadFromToken(r.Header.Get("authorization"), "role")
+	if err != nil {
+		h.lg.Warn("house handler: get flats by id error", zap.Error(err))
+		respBody = CreateErrorResponse(r.Context(), ExtractRoleFromTokenError, ExtractRoleFromTokenErrorMsg)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(respBody)
+		return
+	}
+
+	var status string
+	if role == domain.Moderator {
+		status = domain.AnyStatus
+	} else {
+		status = domain.ApprovedStatus
+	}
+
+	flats, err := h.uc.GetFlatsByHouseID(ctx, id, status, h.lg)
 	if err != nil {
 		h.lg.Warn("house handler: get flats by id error", zap.Error(err))
 		respBody = CreateErrorResponse(r.Context(), GetFlatsByHouseIDError, GetFlatsByHouseIDErrorMsg)
