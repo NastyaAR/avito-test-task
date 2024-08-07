@@ -9,7 +9,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     environment: avito-env
-    
+
     steps:
       - name: Check out repository
         uses: actions/checkout@v2
@@ -47,6 +47,9 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
+      - name: Check out repository
+        uses: actions/checkout@v2
+        
       - name: Test
         working-directory: .
         run: |
