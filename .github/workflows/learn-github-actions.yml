@@ -22,3 +22,21 @@ jobs:
           context: .
           file: ./Dockerfile
           push: false
+
+      - name: Set up Docker Compose
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker-compose
+
+      - name: Run services
+        run:
+          docker-compose up -d
+
+      - name: Check services
+        run:
+          sleep 10
+          docker-compose ps -a
+
+      - name: Stop services
+        run:
+          docker-compose down
