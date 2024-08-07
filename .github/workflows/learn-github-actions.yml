@@ -16,17 +16,19 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
 
-      - name: Build Docker image
-        run:
-          docker build -t goback .
-
       - name: Set up Docker Compose
         run: |
           sudo apt-get update
           sudo apt-get install -y docker-compose
 
       - name: Run services
-        run:
+        env:
+          POSTGRES_USER ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DB ${{ secrets.POSTGRES_DB }}
+          REDIS_PASSWORD ${{ secrets.REDIS_PASSWORD }}
+          REDIS_LOG_LEVEL ${{ vars.REDIS_LOG_LEVEL }}
+        run: 
           docker-compose up -d
 
       - name: Check services
