@@ -30,7 +30,7 @@ jobs:
           docker-compose up -d
 
       - name: Check services
-        run:
+        run: |
           sleep 10
           docker-compose ps
 
