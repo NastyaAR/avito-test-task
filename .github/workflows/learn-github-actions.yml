@@ -30,6 +30,8 @@ jobs:
           REDIS_LOG_LEVEL: ${{ vars.REDIS_LOG_LEVEL }}
         run: |
           docker-compose up -d
+          docker-compose logs postgres-db
+          
 
       - name: Check services
         run: |
@@ -45,5 +47,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Test
-        run:
-          go test avito-test-task/tests
+        run: |
+          cd tests
+          go test .
