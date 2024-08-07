@@ -6,6 +6,7 @@ on:
       - main
 
 jobs:
+  environment: avito-env
   build:
     runs-on: ubuntu-latest
 
@@ -49,5 +50,6 @@ jobs:
       - name: Test
         working-directory: .
         run: |
+          ls -al
           cd tests
           go test .
