@@ -153,11 +153,21 @@ services:
     networks:
       - dev
 
+  migrate:
+    image: migrate/migrate:v4.17.1
+    depends_on:
+      - postgres
+    volumes:
+      - ./migrations:/migrations
+    entrypoint: [ "migrate", "migrate", "-path", "/migrations", "-database", "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable", "up" ]
+    networks:
+        - dev
 
 volumes:
   postgres-data:
   postgres:
   redis-data:
+  migrations:
   
 networks:
     dev: 
