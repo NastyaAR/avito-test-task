@@ -12,7 +12,10 @@ const (
 	Client    = "client"
 )
 
-var SessionUserID = uuid.New()
+var (
+	DummyMail     = "dummy@mail.ru"
+	DummyPassword = "dummy_password"
+)
 
 var (
 	ErrUser_BadType     = errors.New("bd user type")

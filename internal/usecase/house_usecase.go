@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
+	"sync"
 	"time"
 )
 
@@ -35,12 +36,6 @@ func (u *HouseUsecase) Create(ctx context.Context, req *domain.CreateHouseReques
 		lg.Warn("house usecase: create error: bad request = nil")
 		return domain.CreateHouseResponse{},
 			fmt.Errorf("house usecase: create error: %w", domain.ErrHouse_BadRequest)
-	}
-
-	if req.HomeID < 1 {
-		lg.Warn("house usecase: create error: bad house id", zap.Int("house_id", req.HomeID))
-		return domain.CreateHouseResponse{},
-			fmt.Errorf("house usecase: create error: %w", domain.ErrFlat_BadHouseID)
 	}
 
 	if req.Year < 0 {
@@ -78,6 +73,69 @@ func (u *HouseUsecase) Create(ctx context.Context, req *domain.CreateHouseReques
 	return houseResponse, nil
 }
 
+func parallelFlatFilter(flats []domain.Flat, status string, lg *zap.Logger) domain.FlatsByHouseResponse {
+	var (
+		flatsArr []domain.SingleFlatResponse
+	)
+
+	lenOfPart := len(flats) / 3
+	parts := make([][]domain.Flat, 0)
+	for i := 0; i < 2; i++ {
+		parts = append(parts, flats[i*lenOfPart:(i+1)*lenOfPart])
+	}
+	parts = append(parts, flats[2*lenOfPart:0])
+
+	mtx := sync.Mutex{}
+	var wg sync.WaitGroup
+
+	lg.Info("start goroutines")
+	for i := 0; i < 3; i++ {
+		wg.Add(1)
+
+		go func(n int, part []domain.Flat, wg *sync.WaitGroup) {
+			defer wg.Done()
+			for j := 0; j < len(part); j++ {
+				if parts[n][j].Status == status || status == domain.AnyStatus {
+					singleFlat := domain.SingleFlatResponse{
+						ID:      parts[n][j].ID,
+						HouseID: parts[n][j].HouseID,
+						Price:   parts[n][j].Price,
+						Rooms:   parts[n][j].Rooms,
+						Status:  parts[n][j].Status,
+					}
+					mtx.Lock()
+					flatsArr = append(flatsArr, singleFlat)
+					mtx.Unlock()
+				}
+			}
+		}(i, parts[i], &wg)
+	}
+	lg.Info("wait....")
+	wg.Wait()
+	lg.Info("done goroutines")
+	return domain.FlatsByHouseResponse{flatsArr}
+}
+
+func usualFlatFilter(flats []domain.Flat, status string) domain.FlatsByHouseResponse {
+	var (
+		flatsArr []domain.SingleFlatResponse
+	)
+	for _, flat := range flats {
+		if flat.Status == status || status == domain.AnyStatus {
+			singleFlat := domain.SingleFlatResponse{
+				ID:      flat.ID,
+				HouseID: flat.HouseID,
+				Price:   flat.Price,
+				Rooms:   flat.Rooms,
+				Status:  flat.Status,
+			}
+			flatsArr = append(flatsArr, singleFlat)
+		}
+	}
+
+	return domain.FlatsByHouseResponse{flatsArr}
+}
+
 func (u *HouseUsecase) GetFlatsByHouseID(ctx context.Context, id int, status string, lg *zap.Logger) (domain.FlatsByHouseResponse, error) {
 	if id < 0 {
 		lg.Warn("house usecase: get flats by house id error: bad id", zap.Int("house_id", id))
@@ -97,25 +155,14 @@ func (u *HouseUsecase) GetFlatsByHouseID(ctx context.Context, id int, status str
 		return domain.FlatsByHouseResponse{}, fmt.Errorf("house usecase: get flats by house id error: %v", err.Error())
 	}
 
-	var (
-		flatsArr   []domain.SingleFlatResponse
-		singleFlat domain.SingleFlatResponse
-	)
-	for _, flat := range flats {
-		if flat.Status == status || status == domain.AnyStatus {
-			singleFlat = domain.SingleFlatResponse{
-				ID:      flat.ID,
-				HouseID: flat.HouseID,
-				Price:   flat.Price,
-				Rooms:   flat.Rooms,
-				Status:  flat.Status,
-			}
-		}
-
-		flatsArr = append(flatsArr, singleFlat)
+	var flatsResponse domain.FlatsByHouseResponse
+	if len(flats) < domain.FlatThreshhold {
+		flatsResponse = usualFlatFilter(flats, status)
+	} else {
+		flatsResponse = parallelFlatFilter(flats, status, lg)
 	}
 
-	return domain.FlatsByHouseResponse{flatsArr}, nil
+	return flatsResponse, nil
 }
 
 func (uc *HouseUsecase) SubscribeByID(ctx context.Context, id int, userID uuid.UUID, lg *zap.Logger) error {

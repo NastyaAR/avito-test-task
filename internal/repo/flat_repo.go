@@ -5,8 +5,8 @@ import (
 	"context"
 	"fmt"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
 	"time"
 )
@@ -93,11 +93,13 @@ func (p *PostgresFlatRepo) Update(ctx context.Context, moderatorID uuid.UUID, ne
 		flat domain.Flat
 	)
 
-	query := `select flat_id, house_id, user_id, price, rooms, status 
-	from update_status($1, $2, $3, $4)`
+	query := `select flat_id, house_id, user_id, price, rooms, status from update_status($1, $2, $3, $4)`
 
-	err := p.retryAdapter.QueryRow(ctx, query, newFlatData.Status,
-		newFlatData.ID, newFlatData.HouseID, moderatorID).Scan(&flat.ID, &flat.HouseID, &flat.UserID,
+	rows := p.retryAdapter.QueryRow(ctx, query, newFlatData.Status,
+		newFlatData.ID, newFlatData.HouseID, moderatorID)
+	defer rows.Close()
+
+	err := rows.Scan(&flat.ID, &flat.HouseID, &flat.UserID,
 		&flat.Price, &flat.Rooms, &flat.Status)
 	if err != nil {
 		lg.Warn("postgres flat repo: update error", zap.Error(err))
@@ -113,7 +115,9 @@ func (p *PostgresFlatRepo) GetByID(ctx context.Context, flatID int, houseID int,
 
 	query := `select flat_id, house_id, user_id, price, rooms, status
 	from flats where flat_id=$1 and house_id=$2`
-	err := p.retryAdapter.QueryRow(ctx, query, flatID, houseID).Scan(&flat.ID, &flat.HouseID, &flat.UserID,
+	rows := p.retryAdapter.QueryRow(ctx, query, flatID, houseID)
+	defer rows.Close()
+	err := rows.Scan(&flat.ID, &flat.HouseID, &flat.UserID,
 		&flat.Price, &flat.Rooms, &flat.Status)
 	if err != nil {
 		lg.Warn("postgres flat repo: get by id error", zap.Error(err))
@@ -128,6 +132,7 @@ func (p *PostgresFlatRepo) GetAll(ctx context.Context, offset int, limit int, lg
 
 	query := `select flat_id, house_id, user_id, price, rooms, status from flats limit $1 offset $2`
 	rows, err := p.retryAdapter.Query(ctx, query, limit, offset)
+	defer rows.Close()
 	if err != nil {
 		lg.Warn("postgres flat repo: get all error", zap.Error(err))
 		return nil, fmt.Errorf("postgres flat repo: get all error: %v", err.Error())

@@ -29,6 +29,9 @@ create table flats (
     primary key (flat_id, house_id)
 );
 
+create index houses_id_on_flats
+    on flats (house_id);
+
 create table subscribers (
     user_id uuid references users(user_id),
     house_id int references houses(house_id)
@@ -103,7 +106,6 @@ begin
 
     return query
         update flats set status=new_status, moderator_id=new_moderator_id
-            where flats.flat_id=new_flat_id and flats.house_id=new_house_id
-            returning flat_id, house_id, user_id, price, rooms, status, moderator_id;
+            where flats.flat_id=new_flat_id and flats.house_id=new_house_id;
 end;
 $$ language plpgsql;

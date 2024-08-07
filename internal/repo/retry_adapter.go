@@ -2,15 +2,15 @@ package repo
 
 import (
 	"context"
-	"github.com/jackc/pgconn"
-	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"time"
 )
 
 type IPostgresRetryAdapter interface {
 	Exec(ctx context.Context, sql string, arguments ...any) (commandTag pgconn.CommandTag, err error)
-	QueryRow(ctx context.Context, sql string, args ...any) pgx.Row
+	QueryRow(ctx context.Context, sql string, args ...any) pgx.Rows
 	Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error)
 }
 
@@ -39,7 +39,7 @@ func (p *PostgresRetryAdapter) Exec(ctx context.Context, sql string, arguments .
 	return pgconn.CommandTag{}, err
 }
 
-func (p *PostgresRetryAdapter) QueryRow(ctx context.Context, sql string, args ...any) pgx.Row {
+func (p *PostgresRetryAdapter) QueryRow(ctx context.Context, sql string, args ...any) pgx.Rows {
 	var rows pgx.Rows
 	for i := 0; i < p.numberOfRetries; i++ {
 		rows, err := p.db.Query(ctx, sql, args...)

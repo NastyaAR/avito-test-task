@@ -12,7 +12,7 @@ import (
 	"fmt"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"log"
 	"net/http"
 	"time"
@@ -29,13 +29,13 @@ func Run(cfg *config.Config) {
 
 	connString := fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=disable", cfg.User, cfg.Password,
 		cfg.Host, cfg.Port, cfg.Db.Db)
-	pool, err := pgxpool.Connect(ctx, connString)
+	pool, err := pgxpool.New(ctx, connString)
 	defer pool.Close()
 	if err != nil {
 		log.Fatalf("can't connect to postgresql: %v", err.Error())
 	}
 
-	retryAdapter := repo.NewPostgresRetryAdapter(pool, 3)
+	retryAdapter := repo.NewPostgresRetryAdapter(pool, 3, time.Second*3)
 
 	notifyRepo := repo.NewPostgresNotifyRepo(pool, retryAdapter)
 	notifySender := ports.NewSender()

@@ -4,7 +4,7 @@ import (
 	"avito-test-task/internal/domain"
 	"context"
 	"fmt"
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
 )
 
@@ -16,7 +16,7 @@ type PostgresNotifyRepo struct {
 func NewPostgresNotifyRepo(pg *pgxpool.Pool, retryAdapter IPostgresRetryAdapter) *PostgresNotifyRepo {
 	return &PostgresNotifyRepo{
 		db:           pg,
-		retryAdapter: pg,
+		retryAdapter: retryAdapter,
 	}
 }
 
@@ -25,6 +25,7 @@ func (p *PostgresNotifyRepo) GetNoSendNotifies(ctx context.Context, lg *zap.Logg
 
 	query := `select * from new_flats_outbox where status=$1`
 	rows, err := p.retryAdapter.Query(ctx, query, domain.NoSendedNotifyStatus)
+	defer rows.Close()
 	if err != nil {
 		lg.Warn("postgres notify repo: get no send notifies", zap.Error(err))
 		return nil, fmt.Errorf("postgres notify error: get no send notifies: %v", err.Error())

@@ -8,6 +8,8 @@ import (
 	"time"
 )
 
+const FlatThreshhold = 3
+
 var (
 	ErrHouse_BadRequest = errors.New("bad house request for create")
 	ErrHouse_BadID      = errors.New("bad house id")

@@ -3,8 +3,9 @@ package repo
 import (
 	"avito-test-task/internal/domain"
 	"context"
+	"fmt"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
 )
 
@@ -36,7 +37,7 @@ func (p *PostgresUserRepo) Create(ctx context.Context, user *domain.User, lg *za
 func (p *PostgresUserRepo) DeleteByID(ctx context.Context, id string, lg *zap.Logger) error {
 	lg.Info("delete user", zap.String("user_id", id))
 
-	query := `delete from users where id=$1`
+	query := `delete from users where user_id=$1`
 	_, err := p.retryAdapter.Exec(ctx, query, id)
 	if err != nil {
 		lg.Warn("postgres delete user error", zap.Error(err))
@@ -68,7 +69,9 @@ func (p *PostgresUserRepo) GetByID(ctx context.Context, id uuid.UUID, lg *zap.Lo
 	lg.Info("get user by id", zap.String("user_id", id.String()))
 
 	query := `select * from users where user_id=$1`
-	err := p.retryAdapter.QueryRow(ctx, query, id).Scan(&user.UserID, &user.Mail, &user.Password, &user.Role)
+	rows := p.retryAdapter.QueryRow(ctx, query, id)
+	defer rows.Close()
+	err := rows.Scan(&user.UserID, &user.Mail, &user.Password, &user.Role)
 	if err != nil {
 		lg.Warn("postgres get by id user error", zap.Error(err))
 		return domain.User{}, err
@@ -82,6 +85,12 @@ func (p *PostgresUserRepo) GetAll(ctx context.Context, offset int, limit int, lg
 
 	query := `select * from users limit $1 offset $2`
 	rows, err := p.retryAdapter.Query(ctx, query, limit, offset)
+	defer rows.Close()
+	if err != nil {
+		lg.Warn("user repo: get all error", zap.Error(err))
+		return nil,
+			fmt.Errorf("user repo: get all error: %v", err.Error())
+	}
 
 	var (
 		users []domain.User

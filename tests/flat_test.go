@@ -10,7 +10,7 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 	"log"
@@ -27,17 +27,17 @@ func initDB(connString string) {
 	m.Up()
 }
 
-func initEnv() (domain.FlatUsecase, *zap.Logger, *pgxpool.Pool) {
+func initFlatEnv() (domain.FlatUsecase, *zap.Logger, *pgxpool.Pool) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	connString := "postgres://test-user:test-password@localhost:5431/test-db?sslmode=disable"
-	pool, err := pgxpool.Connect(ctx, connString)
+	pool, err := pgxpool.New(ctx, connString)
 	if err != nil {
 		log.Fatalf("can't connect to postgresql: %v", err.Error())
 	}
 
-	retryAdapter := repo.NewPostgresRetryAdapter(pool, 3)
+	retryAdapter := repo.NewPostgresRetryAdapter(pool, 3, time.Second)
 	flatRepo := repo.NewPostgresFlatRepo(pool, retryAdapter)
 	flatUsecase := usecase.NewFlatUsecase(flatRepo)
 	lg, _ := pkg.CreateLogger("../log.log", "prod")
@@ -46,8 +46,8 @@ func initEnv() (domain.FlatUsecase, *zap.Logger, *pgxpool.Pool) {
 }
 
 func TestCreateNormalFlat(t *testing.T) {
-	flatUsecase, lg, pool := initEnv()
-	initEnv()
+	flatUsecase, lg, pool := initFlatEnv()
+	initFlatEnv()
 	initDB("")
 	defer pool.Close()
 
@@ -80,8 +80,8 @@ func TestCreateNormalFlat(t *testing.T) {
 }
 
 func TestCreateHouseNotExist(t *testing.T) {
-	flatUsecase, lg, pool := initEnv()
-	initEnv()
+	flatUsecase, lg, pool := initFlatEnv()
+	initFlatEnv()
 	initDB("")
 	defer pool.Close()
 
@@ -102,8 +102,8 @@ func TestCreateHouseNotExist(t *testing.T) {
 }
 
 func TestCreateUserNotExists(t *testing.T) {
-	flatUsecase, lg, pool := initEnv()
-	initEnv()
+	flatUsecase, lg, pool := initFlatEnv()
+	initFlatEnv()
 	initDB("")
 	defer pool.Close()
 
@@ -124,8 +124,8 @@ func TestCreateUserNotExists(t *testing.T) {
 }
 
 func TestCreateBadFlatID(t *testing.T) {
-	flatUsecase, lg, pool := initEnv()
-	initEnv()
+	flatUsecase, lg, pool := initFlatEnv()
+	initFlatEnv()
 	initDB("")
 	defer pool.Close()
 
@@ -142,5 +142,25 @@ func TestCreateBadFlatID(t *testing.T) {
 
 	_, err := flatUsecase.Create(ctx, userID, &flatReq, lg)
 
+	assert.Error(t, err)
+}
+
+func TestUpdateBadIDFlat(t *testing.T) {
+	flatUsecase, lg, pool := initFlatEnv()
+	initFlatEnv()
+	initDB("")
+	defer pool.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+
+	modID, _ := uuid.Parse("019126ee-2b7d-758e-bb22-fe2e45b2db23")
+	flatReq := domain.UpdateFlatRequest{
+		ID:      0,
+		HouseID: 1,
+		Status:  "on moderation",
+	}
+
+	_, err := flatUsecase.Update(ctx, modID, &flatReq, lg)
 	assert.Error(t, err)
 }

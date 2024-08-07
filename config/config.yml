@@ -1,6 +1,6 @@
 logger:
     log-level: "info"
-    log-file: "/var/log/avito.log"
+    log-file: "./avito.log"
 
 postgres:
     host: "localhost"

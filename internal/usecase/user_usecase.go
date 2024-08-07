@@ -123,10 +123,31 @@ func (u *UserUsecase) DummyLogin(ctx context.Context, userType string, lg *zap.L
 			fmt.Errorf("user usecase: dummy login error: %w", domain.ErrUser_BadType)
 	}
 
-	token, err := pkg.GenerateJWTToken(domain.SessionUserID, userType)
+	uuid, err := uuid.NewV7()
+	if err != nil {
+		lg.Warn("user usecase: dummy login error", zap.Error(err))
+		return domain.LoginUserResponse{}, fmt.Errorf("user usecase: register error: %v", err.Error())
+	}
+
+	token, err := pkg.GenerateJWTToken(uuid, userType)
 	if err != nil {
 		lg.Warn("user usecase: login error", zap.Error(err))
-		return domain.LoginUserResponse{}, fmt.Errorf("user usecase: login error: %v", err.Error())
+		return domain.LoginUserResponse{},
+			fmt.Errorf("user usecase: login error: %v", err.Error())
+	}
+
+	user := domain.User{
+		UserID:   uuid,
+		Mail:     domain.DummyMail,
+		Password: domain.DummyPassword,
+		Role:     userType,
+	}
+
+	err = u.userRepo.Create(ctx, &user, lg)
+	if err != nil {
+		lg.Warn("user usecase: dummy login error", zap.Error(err))
+		return domain.LoginUserResponse{},
+			fmt.Errorf("user usecase: dummy login error: %v", err.Error())
 	}
 
 	return domain.LoginUserResponse{token}, nil
