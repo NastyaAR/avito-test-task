@@ -29,6 +29,7 @@ jobs:
           REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
           REDIS_LOG_LEVEL: ${{ vars.REDIS_LOG_LEVEL }}
         run: |
+          export POSTGRES_USER=$POSTGRES_USER POSTGRES_PASSWORD=$POSTGRES_PASSWORD POSTGRES_DB=$POSTGRES_DB
           docker-compose up -d
           docker logs postgres-db
           
@@ -46,7 +47,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Test
-        working-directory: ./app
+        working-directory: .
         run: |
           cd tests
           go test .
