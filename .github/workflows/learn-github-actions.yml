@@ -32,7 +32,7 @@ jobs:
       - name: Check services
         run:
           sleep 10
-          docker-compose ps -a
+          docker-compose ps
 
       - name: Stop services
         run:
