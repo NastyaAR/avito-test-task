@@ -20,7 +20,7 @@ import (
 
 func initDB(connString string) {
 	m, _ := migrate.New(
-		"file:///home/nastya/avito/test_migrations",
+		"file:///../test_migrations",
 		"postgres://test-user:test-password@localhost:5431/test-db?sslmode=disable")
 	m.Force(20240806143730)
 	m.Down()
