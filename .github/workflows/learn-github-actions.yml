@@ -30,14 +30,13 @@ jobs:
           REDIS_LOG_LEVEL: ${{ vars.REDIS_LOG_LEVEL }}
         run: |
           docker-compose up -d
-          docker-compose logs postgres-db
+          docker logs postgres-db
           
 
       - name: Check services
         run: |
           sleep 10
           docker-compose ps
-          docker-compose logs postgres-db
 
       - name: Stop services
         run:
@@ -47,6 +46,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Test
+        working-directory: ./app
         run: |
           cd tests
           go test .
