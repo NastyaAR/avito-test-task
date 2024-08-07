@@ -2,7 +2,6 @@ package repo
 
 import (
 	"avito-test-task/internal/domain"
-	"avito-test-task/pkg"
 	"context"
 	"fmt"
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -11,10 +10,10 @@ import (
 
 type PostgresNotifyRepo struct {
 	db           *pgxpool.Pool
-	retryAdapter pkg.IPostgresRetryAdapter
+	retryAdapter IPostgresRetryAdapter
 }
 
-func NewPostgresNotifyRepo(pg *pgxpool.Pool, retryAdapter pkg.IPostgresRetryAdapter) *PostgresNotifyRepo {
+func NewPostgresNotifyRepo(pg *pgxpool.Pool, retryAdapter IPostgresRetryAdapter) *PostgresNotifyRepo {
 	return &PostgresNotifyRepo{
 		db:           pg,
 		retryAdapter: pg,

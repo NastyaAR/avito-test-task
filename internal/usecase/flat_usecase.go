@@ -26,27 +26,32 @@ func (u *FlatUsecase) Create(ctx context.Context, userID uuid.UUID, flatReq *dom
 
 	if flatReq == nil {
 		lg.Warn("flat usecase: create error: bad flat request: nil")
-		return domain.CreateFlatResponse{}, fmt.Errorf("flat usecase: create error: nil flat request")
+		return domain.CreateFlatResponse{},
+			fmt.Errorf("flat usecase: create error: %w", domain.ErrFlat_BadRequest)
 	}
 
 	if flatReq.FlatID < 1 {
 		lg.Warn("flat usecase: create error: bad flat id", zap.Int("flat_id", flatReq.FlatID))
-		return domain.CreateFlatResponse{}, fmt.Errorf("flat usecase: create error: bad flat id")
+		return domain.CreateFlatResponse{},
+			fmt.Errorf("flat usecase: create error: %w", domain.ErrFlat_BadID)
 	}
 
 	if flatReq.HouseID < 1 {
 		lg.Warn("flat usecase: create error: bad house id", zap.Int("house_id", flatReq.HouseID))
-		return domain.CreateFlatResponse{}, fmt.Errorf("flat usecase: create error: bad house id")
+		return domain.CreateFlatResponse{},
+			fmt.Errorf("flat usecase: create error: %w", domain.ErrFlat_BadHouseID)
 	}
 
 	if flatReq.Rooms < 1 {
 		lg.Warn("flat usecase: create error: bad rooms", zap.Int("rooms", flatReq.Rooms))
-		return domain.CreateFlatResponse{}, fmt.Errorf("flat usecase: create error: bad rooms")
+		return domain.CreateFlatResponse{},
+			fmt.Errorf("flat usecase: create error: %w", domain.ErrFlat_BadRooms)
 	}
 
 	if flatReq.Price < 0 {
 		lg.Warn("flat usecase: create error: bad price", zap.Int("price", flatReq.Price))
-		return domain.CreateFlatResponse{}, fmt.Errorf("flat usecase: create error: bad price")
+		return domain.CreateFlatResponse{},
+			fmt.Errorf("flat usecase: create error: %w", domain.ErrFlat_BadPrice)
 	}
 
 	flat := domain.Flat{
@@ -80,22 +85,26 @@ func (u *FlatUsecase) Update(ctx context.Context, moderatorID uuid.UUID, newFlat
 
 	if newFlatData == nil {
 		lg.Warn("flat usecase: update error: bad newFlatData = nil")
-		return domain.CreateFlatResponse{}, fmt.Errorf("flat usecase: update error: bad newFlatData = nil")
+		return domain.CreateFlatResponse{},
+			fmt.Errorf("flat usecase: update error: %w", domain.ErrFlat_BadNewFlat)
 	}
 
 	if newFlatData.ID < 1 {
 		lg.Warn("flat usecase: update error: bad flat id", zap.Int("flat_id", newFlatData.ID))
-		return domain.CreateFlatResponse{}, fmt.Errorf("flat usecase: update error: bad flat id")
+		return domain.CreateFlatResponse{},
+			fmt.Errorf("flat usecase: update error: %w", domain.ErrFlat_BadID)
 	}
 
 	if newFlatData.HouseID < 1 {
 		lg.Warn("flat usecase: update error: bad house id", zap.Int("house_id", newFlatData.HouseID))
-		return domain.CreateFlatResponse{}, fmt.Errorf("flat usecase: update error: bad house id")
+		return domain.CreateFlatResponse{},
+			fmt.Errorf("flat usecase: update error: %w", domain.ErrFlat_BadHouseID)
 	}
 
 	if newFlatData.Status != domain.AnyStatus && !IsCorrectFlatStatus(newFlatData.Status) {
 		lg.Warn("flat usecase: update error: bad status", zap.String("status", newFlatData.Status))
-		return domain.CreateFlatResponse{}, fmt.Errorf("flat usecase: update error: bad status")
+		return domain.CreateFlatResponse{},
+			fmt.Errorf("flat usecase: update error: %w", domain.ErrFlat_BadStatus)
 	}
 
 	flat := domain.Flat{
@@ -107,7 +116,8 @@ func (u *FlatUsecase) Update(ctx context.Context, moderatorID uuid.UUID, newFlat
 	updatedFlat, err := u.flatRepo.Update(ctx, moderatorID, &flat, lg)
 	if err != nil {
 		lg.Warn("flat usecase: update error", zap.Error(err))
-		return domain.CreateFlatResponse{}, fmt.Errorf("flat usecase: update error: %v", err.Error())
+		return domain.CreateFlatResponse{},
+			fmt.Errorf("flat usecase: update error: %v", err.Error())
 	}
 
 	updatedFlatResponse := domain.CreateFlatResponse{

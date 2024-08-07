@@ -35,7 +35,7 @@ func Run(cfg *config.Config) {
 		log.Fatalf("can't connect to postgresql: %v", err.Error())
 	}
 
-	retryAdapter := pkg.NewPostgresRetryAdapter(pool, 3)
+	retryAdapter := repo.NewPostgresRetryAdapter(pool, 3)
 
 	notifyRepo := repo.NewPostgresNotifyRepo(pool, retryAdapter)
 	notifySender := ports.NewSender()

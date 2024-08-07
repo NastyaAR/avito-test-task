@@ -2,9 +2,16 @@ package domain
 
 import (
 	"context"
+	"errors"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 	"time"
+)
+
+var (
+	ErrHouse_BadRequest = errors.New("bad house request for create")
+	ErrHouse_BadID      = errors.New("bad house id")
+	ErrHouse_BadYear    = errors.New("bad house construct year")
 )
 
 type House struct {

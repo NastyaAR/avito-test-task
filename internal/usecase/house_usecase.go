@@ -3,7 +3,6 @@ package usecase
 import (
 	"avito-test-task/internal/domain"
 	"context"
-	"errors"
 	"fmt"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
@@ -31,6 +30,24 @@ func NewHouseUsecase(houseRepo domain.HouseRepo, notifySender domain.NotifySende
 
 func (u *HouseUsecase) Create(ctx context.Context, req *domain.CreateHouseRequest, lg *zap.Logger) (domain.CreateHouseResponse, error) {
 	lg.Info("house usecase: create")
+
+	if req == nil {
+		lg.Warn("house usecase: create error: bad request = nil")
+		return domain.CreateHouseResponse{},
+			fmt.Errorf("house usecase: create error: %w", domain.ErrHouse_BadRequest)
+	}
+
+	if req.HomeID < 1 {
+		lg.Warn("house usecase: create error: bad house id", zap.Int("house_id", req.HomeID))
+		return domain.CreateHouseResponse{},
+			fmt.Errorf("house usecase: create error: %w", domain.ErrFlat_BadHouseID)
+	}
+
+	if req.Year < 0 {
+		lg.Warn("house usecase: create errorL bad house year", zap.Int("year", req.Year))
+		return domain.CreateHouseResponse{},
+			fmt.Errorf("house usecase: create error: %w", domain.ErrHouse_BadYear)
+	}
 
 	date := time.Now()
 
@@ -63,13 +80,15 @@ func (u *HouseUsecase) Create(ctx context.Context, req *domain.CreateHouseReques
 
 func (u *HouseUsecase) GetFlatsByHouseID(ctx context.Context, id int, status string, lg *zap.Logger) (domain.FlatsByHouseResponse, error) {
 	if id < 0 {
-		lg.Warn("house usecase: get flats by house id error: nil request")
-		return domain.FlatsByHouseResponse{}, errors.New("house usecase: get flats by house id error: nil request")
+		lg.Warn("house usecase: get flats by house id error: bad id", zap.Int("house_id", id))
+		return domain.FlatsByHouseResponse{},
+			fmt.Errorf("house usecase: get flats by house id error: %w", domain.ErrHouse_BadID)
 	}
 
 	if !IsCorrectFlatStatus(status) {
 		lg.Warn("house usecase: get flats by house id error: bad status", zap.String("status", status))
-		return domain.FlatsByHouseResponse{}, errors.New("house usecase: get flats by house id error: bad status")
+		return domain.FlatsByHouseResponse{},
+			fmt.Errorf("house usecase: get flats by house id error: %w", domain.ErrFlat_BadStatus)
 	}
 
 	flats, err := u.houseRepo.GetFlatsByHouseID(ctx, id, lg)
@@ -101,6 +120,11 @@ func (u *HouseUsecase) GetFlatsByHouseID(ctx context.Context, id int, status str
 
 func (uc *HouseUsecase) SubscribeByID(ctx context.Context, id int, userID uuid.UUID, lg *zap.Logger) error {
 	lg.Info("house usecase: subscribe by id")
+
+	if id < 0 {
+		lg.Warn("house usecase: subscribe by id error: bad id", zap.Int("house_id", id))
+		return fmt.Errorf("house usecase: suscribe by id error: %w", domain.ErrHouse_BadID)
+	}
 
 	err := uc.houseRepo.SubscribeByID(ctx, id, userID, lg)
 	if err != nil {

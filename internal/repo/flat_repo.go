@@ -2,7 +2,6 @@ package repo
 
 import (
 	"avito-test-task/internal/domain"
-	"avito-test-task/pkg"
 	"context"
 	"fmt"
 	"github.com/google/uuid"
@@ -14,10 +13,10 @@ import (
 
 type PostgresFlatRepo struct {
 	db           *pgxpool.Pool
-	retryAdapter pkg.IPostgresRetryAdapter
+	retryAdapter IPostgresRetryAdapter
 }
 
-func NewPostgresFlatRepo(db *pgxpool.Pool, retryAdapter pkg.IPostgresRetryAdapter) *PostgresFlatRepo {
+func NewPostgresFlatRepo(db *pgxpool.Pool, retryAdapter IPostgresRetryAdapter) *PostgresFlatRepo {
 	return &PostgresFlatRepo{
 		db:           db,
 		retryAdapter: retryAdapter,

@@ -1,10 +1,11 @@
-package pkg
+package repo
 
 import (
 	"context"
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"time"
 )
 
 type IPostgresRetryAdapter interface {
@@ -16,12 +17,14 @@ type IPostgresRetryAdapter interface {
 type PostgresRetryAdapter struct {
 	db              *pgxpool.Pool
 	numberOfRetries int
+	sleepTimeMs     time.Duration
 }
 
-func NewPostgresRetryAdapter(db *pgxpool.Pool, retryNumber int) *PostgresRetryAdapter {
+func NewPostgresRetryAdapter(db *pgxpool.Pool, retryNumber int, sleepTimeMs time.Duration) *PostgresRetryAdapter {
 	return &PostgresRetryAdapter{
 		db:              db,
 		numberOfRetries: retryNumber,
+		sleepTimeMs:     sleepTimeMs,
 	}
 }
 
@@ -31,6 +34,7 @@ func (p *PostgresRetryAdapter) Exec(ctx context.Context, sql string, arguments .
 		if err == nil {
 			return commTag, nil
 		}
+		time.Sleep(p.sleepTimeMs)
 	}
 	return pgconn.CommandTag{}, err
 }
@@ -43,6 +47,7 @@ func (p *PostgresRetryAdapter) QueryRow(ctx context.Context, sql string, args ..
 			rows.Next()
 			return rows
 		}
+		time.Sleep(p.sleepTimeMs)
 	}
 	return rows
 }
@@ -57,6 +62,7 @@ func (p *PostgresRetryAdapter) Query(ctx context.Context, sql string, args ...an
 		if err == nil {
 			return rows, nil
 		}
+		time.Sleep(p.sleepTimeMs)
 	}
 	return rows, err
 }

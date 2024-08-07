@@ -56,7 +56,7 @@ func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		h.lg.Warn("user handler: register error", zap.Error(err))
 		respBody = CreateErrorResponse(r.Context(), RegisterUserError, RegisterUserErrorMsg)
-		w.WriteHeader(http.StatusInternalServerError)
+		w.WriteHeader(GetReturnHTTPCode(err))
 		w.Write(respBody)
 		return
 	}
@@ -106,7 +106,7 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		h.lg.Warn("user handler: login error", zap.Error(err))
 		respBody = CreateErrorResponse(r.Context(), LoginUserError, LoginUserErrorMsg)
-		w.WriteHeader(http.StatusInternalServerError)
+		w.WriteHeader(GetReturnHTTPCode(err))
 		w.Write(respBody)
 		return
 	}
@@ -140,7 +140,7 @@ func (h *UserHandler) DummyLogin(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		h.lg.Warn("user handler: dummy login error", zap.Error(err))
 		respBody = CreateErrorResponse(r.Context(), DummyLoginError, DummyLoginErrorMsg)
-		w.WriteHeader(http.StatusInternalServerError)
+		w.WriteHeader(GetReturnHTTPCode(err))
 		w.Write(respBody)
 		return
 	}

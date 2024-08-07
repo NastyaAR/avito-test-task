@@ -1,9 +1,12 @@
 package handlers
 
 import (
+	"avito-test-task/internal/domain"
 	"context"
 	"encoding/json"
+	"errors"
 	"github.com/go-chi/chi/v5/middleware"
+	"net/http"
 )
 
 type ErrorResponse struct {
@@ -65,4 +68,30 @@ func CreateErrorResponse(ctx context.Context, errCode int, msg string) []byte {
 	}
 
 	return response
+}
+
+func GetReturnHTTPCode(err error) int {
+	errorsList := []error{
+		domain.ErrHouse_BadRequest,
+		domain.ErrHouse_BadID,
+		domain.ErrHouse_BadYear,
+		domain.ErrUser_BadType,
+		domain.ErrUser_BadRequest,
+		domain.ErrUser_BadMail,
+		domain.ErrUser_BadPassword,
+		domain.ErrFlat_BadPrice,
+		domain.ErrFlat_BadID,
+		domain.ErrFlat_BadHouseID,
+		domain.ErrFlat_BadRooms,
+		domain.ErrFlat_BadNewFlat,
+		domain.ErrFlat_BadStatus,
+		domain.ErrFlat_BadRequest,
+	}
+
+	for _, e := range errorsList {
+		if errors.Is(err, e) {
+			return http.StatusBadRequest
+		}
+	}
+	return http.StatusInternalServerError
 }

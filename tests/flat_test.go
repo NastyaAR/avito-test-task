@@ -6,7 +6,6 @@ import (
 	"avito-test-task/internal/usecase"
 	"avito-test-task/pkg"
 	"context"
-	"fmt"
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
@@ -20,10 +19,10 @@ import (
 )
 
 func initDB(connString string) {
-	m, err := migrate.New(
-		"file:///home/nastya/avito/migrations",
+	m, _ := migrate.New(
+		"file:///home/nastya/avito/test_migrations",
 		"postgres://test-user:test-password@localhost:5431/test-db?sslmode=disable")
-	fmt.Println(err)
+	m.Force(20240806143730)
 	m.Down()
 	m.Up()
 }
@@ -38,7 +37,7 @@ func initEnv() (domain.FlatUsecase, *zap.Logger, *pgxpool.Pool) {
 		log.Fatalf("can't connect to postgresql: %v", err.Error())
 	}
 
-	retryAdapter := pkg.NewPostgresRetryAdapter(pool, 3)
+	retryAdapter := repo.NewPostgresRetryAdapter(pool, 3)
 	flatRepo := repo.NewPostgresFlatRepo(pool, retryAdapter)
 	flatUsecase := usecase.NewFlatUsecase(flatRepo)
 	lg, _ := pkg.CreateLogger("../log.log", "prod")
@@ -77,7 +76,7 @@ func TestCreateNormalFlat(t *testing.T) {
 		Status:  domain.CreatedStatus,
 	}
 
-	assert.Same(t, &expected, &flat)
+	assert.Equal(t, expected, flat)
 }
 
 func TestCreateHouseNotExist(t *testing.T) {

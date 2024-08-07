@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+	"errors"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
@@ -12,6 +13,13 @@ const (
 )
 
 var SessionUserID = uuid.New()
+
+var (
+	ErrUser_BadType     = errors.New("bd user type")
+	ErrUser_BadRequest  = errors.New("bad nil request")
+	ErrUser_BadMail     = errors.New("bad mail")
+	ErrUser_BadPassword = errors.New("bad password")
+)
 
 type User struct {
 	UserID   uuid.UUID

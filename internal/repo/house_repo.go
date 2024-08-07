@@ -2,7 +2,6 @@ package repo
 
 import (
 	"avito-test-task/internal/domain"
-	"avito-test-task/pkg"
 	"context"
 	"fmt"
 	"github.com/google/uuid"
@@ -12,10 +11,10 @@ import (
 
 type PostgresHouseRepo struct {
 	db           *pgxpool.Pool
-	retryAdapter pkg.IPostgresRetryAdapter
+	retryAdapter IPostgresRetryAdapter
 }
 
-func NewPostgresHouseRepo(db *pgxpool.Pool, retryAdapter pkg.IPostgresRetryAdapter) *PostgresHouseRepo {
+func NewPostgresHouseRepo(db *pgxpool.Pool, retryAdapter IPostgresRetryAdapter) *PostgresHouseRepo {
 	return &PostgresHouseRepo{
 		db:           db,
 		retryAdapter: retryAdapter,

@@ -59,7 +59,7 @@ func (h *HouseHandler) Create(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		h.lg.Warn("house handler: create error", zap.Error(err))
 		respBody = CreateErrorResponse(r.Context(), CreateHouseError, CreateHouseErrorMsg)
-		w.WriteHeader(http.StatusInternalServerError)
+		w.WriteHeader(GetReturnHTTPCode(err))
 		w.Write(respBody)
 		return
 	}
@@ -116,7 +116,7 @@ func (h *HouseHandler) GetFlatsByID(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		h.lg.Warn("house handler: get flats by id error", zap.Error(err))
 		respBody = CreateErrorResponse(r.Context(), GetFlatsByHouseIDError, GetFlatsByHouseIDErrorMsg)
-		w.WriteHeader(http.StatusInternalServerError)
+		w.WriteHeader(GetReturnHTTPCode(err))
 		w.Write(respBody)
 		return
 	}
@@ -176,7 +176,7 @@ func (h *HouseHandler) Subscribe(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		h.lg.Warn("house handler: subscribe error", zap.Error(err))
 		respBody = CreateErrorResponse(r.Context(), SubscribeOnHouseError, SubscribeOnHouseErrorMsg)
-		w.WriteHeader(http.StatusInternalServerError)
+		w.WriteHeader(GetReturnHTTPCode(err))
 		w.Write(respBody)
 		return
 	}

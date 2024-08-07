@@ -2,7 +2,6 @@ package repo
 
 import (
 	"avito-test-task/internal/domain"
-	"avito-test-task/pkg"
 	"context"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -11,10 +10,10 @@ import (
 
 type PostgresUserRepo struct {
 	db           *pgxpool.Pool
-	retryAdapter pkg.IPostgresRetryAdapter
+	retryAdapter IPostgresRetryAdapter
 }
 
-func NewPostrgesUserRepo(db *pgxpool.Pool, retryAdapter pkg.IPostgresRetryAdapter) *PostgresUserRepo {
+func NewPostrgesUserRepo(db *pgxpool.Pool, retryAdapter IPostgresRetryAdapter) *PostgresUserRepo {
 	return &PostgresUserRepo{
 		db:           db,
 		retryAdapter: retryAdapter,

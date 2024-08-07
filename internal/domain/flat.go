@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+	"errors"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
@@ -12,6 +13,16 @@ const (
 	DeclinedStatus   = "declined"
 	ModeratingStatus = "on moderation"
 	AnyStatus        = "any"
+)
+
+var (
+	ErrFlat_BadPrice   = errors.New("bad flat price")
+	ErrFlat_BadID      = errors.New("bad flat id")
+	ErrFlat_BadHouseID = errors.New("bad flats house id")
+	ErrFlat_BadRooms   = errors.New("bad flat rooms")
+	ErrFlat_BadNewFlat = errors.New("bad new flat for update")
+	ErrFlat_BadStatus  = errors.New("bad flat status")
+	ErrFlat_BadRequest = errors.New("bad request for create")
 )
 
 type Flat struct {

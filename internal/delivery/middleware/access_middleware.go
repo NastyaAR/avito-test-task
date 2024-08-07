@@ -4,12 +4,17 @@ import (
 	"avito-test-task/internal/delivery/handlers"
 	"avito-test-task/internal/domain"
 	"avito-test-task/pkg"
-	"fmt"
 	"net/http"
+	"regexp"
 )
 
 func isModeratorOnly(path string) bool {
 	return path == "/house/create" || path == "/flat/update"
+}
+
+func isClientOnly(path string) bool {
+	matched, _ := regexp.MatchString("/house/[0-9]+/subscribe", path)
+	return path == "/flat/create" || matched
 }
 
 func AccessMiddleware(handler http.HandlerFunc) http.HandlerFunc {
@@ -25,8 +30,14 @@ func AccessMiddleware(handler http.HandlerFunc) http.HandlerFunc {
 		}
 
 		path := r.URL.Path
-		fmt.Println(path)
 		if isModeratorOnly(path) && role != domain.Moderator {
+			respBody = handlers.CreateErrorResponse(r.Context(), handlers.NoAccessError, handlers.NoAccessErrorMsg)
+			w.WriteHeader(http.StatusUnauthorized)
+			w.Write(respBody)
+			return
+		}
+
+		if isClientOnly(path) && role != domain.Client {
 			respBody = handlers.CreateErrorResponse(r.Context(), handlers.NoAccessError, handlers.NoAccessErrorMsg)
 			w.WriteHeader(http.StatusUnauthorized)
 			w.Write(respBody)
