@@ -41,7 +41,7 @@ jobs:
           docker-compose ps
 
       - name: Test
-        run:
+        run: |
           cd tests
           go test .
 
