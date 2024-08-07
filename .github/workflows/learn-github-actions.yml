@@ -28,7 +28,7 @@ jobs:
           POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
           REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
           REDIS_LOG_LEVEL: ${{ vars.REDIS_LOG_LEVEL }}
-        run:
+        run: |
           docker-compose up -d
 
       - name: Check services
@@ -39,3 +39,10 @@ jobs:
       - name: Stop services
         run:
           docker-compose down
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test
+        run:
+          go test avito-test-task/tests
