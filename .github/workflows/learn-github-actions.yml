@@ -40,19 +40,11 @@ jobs:
           sleep 10
           docker-compose ps
 
+      - name: Test
+        run:
+          cd tests
+          go test .
+
       - name: Stop services
         run:
           docker-compose down
-
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v2
-        
-      - name: Test
-        working-directory: .
-        run: |
-          ls -al
-          cd tests
-          go test .
