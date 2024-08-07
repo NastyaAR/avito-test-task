@@ -35,6 +35,7 @@ jobs:
         run: |
           sleep 10
           docker-compose ps
+          docker-compose logs postgres-db
 
       - name: Stop services
         run:
