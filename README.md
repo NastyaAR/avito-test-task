@@ -1,4 +1,4 @@
 # avito-test-task
 Тестовое задание Avito Bootcamp
 
-![example workflow](https://github.com/github/docs/actions/workflows/main.yml/badge.svg)
+![build workflow](https://github.com/OWNER/REPOSITORY/actions/workflows/learn-github-actions.yml/badge.svg)
