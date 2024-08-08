@@ -22,7 +22,7 @@ import (
 func initDB(connString string) {
 	m, err := migrate.New(
 		"file://../test_migrations",
-		"postgres://test-user:test-password@postrges-test:5431/test-db?sslmode=disable")
+		"postgres://test-user:test-password@localhost:5431/test-db?sslmode=disable")
 	fmt.Println(err)
 	err = m.Force(20240806143730)
 	fmt.Println(err)
