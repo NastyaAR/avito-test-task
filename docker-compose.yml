@@ -138,7 +138,9 @@ services:
       dockerfile: Dockerfile
       context: ./migrations
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+
     volumes:
       - migrations:/migrations
     entrypoint: [ "migrate", "-path", "/migrations", "-database", "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable", "up" ]
