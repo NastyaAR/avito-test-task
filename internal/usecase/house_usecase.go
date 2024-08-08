@@ -83,12 +83,11 @@ func parallelFlatFilter(flats []domain.Flat, lg *zap.Logger) domain.FlatsByHouse
 	for i := 0; i < 2; i++ {
 		parts = append(parts, flats[i*lenOfPart:(i+1)*lenOfPart])
 	}
-	parts = append(parts, flats[2*lenOfPart:0])
+	parts = append(parts, flats[2*lenOfPart:])
 
 	mtx := sync.Mutex{}
 	var wg sync.WaitGroup
 
-	lg.Info("start goroutines")
 	for i := 0; i < 3; i++ {
 		wg.Add(1)
 
@@ -108,9 +107,7 @@ func parallelFlatFilter(flats []domain.Flat, lg *zap.Logger) domain.FlatsByHouse
 			}
 		}(i, parts[i], &wg)
 	}
-	lg.Info("wait....")
 	wg.Wait()
-	lg.Info("done goroutines")
 	return domain.FlatsByHouseResponse{flatsArr}
 }
 

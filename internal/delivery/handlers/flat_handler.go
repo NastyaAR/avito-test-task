@@ -75,7 +75,7 @@ func (h *FlatHandler) Create(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		h.lg.Warn("flat handler: create error", zap.Error(err))
 		respBody = CreateErrorResponse(r.Context(), CreateFlatError, CreateFlatErrorMsg)
-		w.WriteHeader(GetReturnHTTPCode(err))
+		w.WriteHeader(GetReturnHTTPCode(w, err))
 		w.Write(respBody)
 		return
 	}
@@ -143,7 +143,7 @@ func (h *FlatHandler) Update(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		h.lg.Warn("flat handler: update error", zap.Error(err))
 		respBody = CreateErrorResponse(r.Context(), UpdateFlatError, UpdateFlatErrorMsg)
-		w.WriteHeader(GetReturnHTTPCode(err))
+		w.WriteHeader(GetReturnHTTPCode(w, err))
 		w.Write(respBody)
 		return
 	}

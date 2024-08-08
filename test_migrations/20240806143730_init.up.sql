@@ -50,17 +50,25 @@ create or replace function insert_flat_to_outbox()
     returns trigger as $$
 declare
     subscriber_mail text;
+    subscriber_mails text[];
 begin
-    select mail into subscriber_mail
-    from subscribers join users u on u.user_id = subscribers.user_id
-    where subscribers.user_id=NEW.user_id and house_id=NEW.house_id;
+    select array_agg(u.mail)
+    into subscriber_mails
+    from subscribers s
+             join users u on u.user_id = s.user_id
+    where s.house_id = new.house_id;
 
-    if subscriber_mail is null then
-        return NEW;
+    if subscriber_mails is null then
+        return new;
     end if;
 
-    insert into new_flats_outbox(flat_id, house_id, mail, status) values (NEW.flat_id, NEW.house_id, subscriber_mail, 'no send');
-    return NEW;
+    foreach subscriber_mail in array subscriber_mails
+        loop
+            insert into new_flats_outbox(flat_id, house_id, mail, status)
+            values (new.flat_id, new.house_id, subscriber_mail, 'no send');
+        end loop;
+
+    return new;
 end;
 $$ language plpgsql;
 
@@ -122,6 +130,9 @@ $$ language plpgsql;
 
 insert into houses(address, construct_year, developer, create_house_date, update_flat_date)
 values ('address', 2021, 'dev', now(), now());
+
+insert into houses(address, construct_year, developer, create_house_date, update_flat_date)
+values ('address', 2022, 'dev', now(), now());
 
 insert into users(user_id, mail, password, role)
 values ('019126ee-2b7d-758e-bb22-fe2e45b2db22', 'test@mail.ru', 'password', 'client');

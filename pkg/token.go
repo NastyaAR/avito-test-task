@@ -6,13 +6,15 @@ import (
 	"time"
 )
 
+var Key string
+
 func GenerateJWTToken(userId uuid.UUID, role string) (string, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
 	claims["userID"] = userId
 	claims["role"] = role
 	claims["expired_time"] = time.Now().Add(time.Hour * 1).Unix()
-	tokenString, err := token.SignedString([]byte("some key"))
+	tokenString, err := token.SignedString([]byte(Key))
 	if err != nil {
 		return "", err
 	}
@@ -22,7 +24,7 @@ func GenerateJWTToken(userId uuid.UUID, role string) (string, error) {
 
 func ValidateJWTToken(tokenString string) (*jwt.MapClaims, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		return []byte("some key"), nil
+		return []byte(Key), nil
 	})
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
@@ -33,7 +35,7 @@ func ValidateJWTToken(tokenString string) (*jwt.MapClaims, error) {
 
 func ExtractPayloadFromToken(tokenString string, field string) (string, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		return []byte("some key"), nil
+		return []byte(Key), nil
 	})
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {

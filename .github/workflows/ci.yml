@@ -1,4 +1,4 @@
-name: Build Docker Image
+name: Build and Test
 
 on:
   push:
@@ -27,8 +27,6 @@ jobs:
           POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
           POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
-          REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
-          REDIS_LOG_LEVEL: ${{ vars.REDIS_LOG_LEVEL }}
         run: |
           export POSTGRES_USER=$POSTGRES_USER POSTGRES_PASSWORD=$POSTGRES_PASSWORD POSTGRES_DB=$POSTGRES_DB
           docker-compose up -d

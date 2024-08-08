@@ -9,7 +9,7 @@ services:
     container_name: app1
     depends_on:
       - postgres
-      - redis
+      - migrate
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
@@ -28,7 +28,6 @@ services:
     container_name: app2
     depends_on:
       - postgres
-      - redis
       - backend3
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
@@ -48,7 +47,6 @@ services:
     container_name: app3
     depends_on:
       - postgres
-      - redis
       - backend1
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
@@ -121,24 +119,6 @@ services:
     networks:
       - dev
 
-  redis:
-    container_name: redis-db
-    image: redis:6.2-alpine
-    healthcheck:
-      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
-    restart: unless-stopped
-    ports:
-      - "6379:6379"
-    command: redis-server --save 20 1 --loglevel ${REDIS_LOG_LEVEL} --requirepass ${REDIS_PASSWORD}
-    volumes:
-      - ./redis/redis-data:/data
-    networks:
-      - dev
-
   nginx:
     build:
       dockerfile: NginxDockerfile
@@ -154,19 +134,19 @@ services:
       - dev
 
   migrate:
-    image: migrate/migrate:v4.17.1
+    build:
+      dockerfile: Dockerfile
+      context: ./migrations
     depends_on:
       - postgres
     volumes:
-      - ./migrations:/migrations
-    entrypoint: [ "migrate", "migrate", "-path", "/migrations", "-database", "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable", "up" ]
+      - migrations:/migrations
+    entrypoint: [ "migrate", "-path", "/migrations", "-database", "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable", "up" ]
     networks:
         - dev
 
 volumes:
-  postgres-data:
   postgres:
-  redis-data:
   migrations:
   
 networks:

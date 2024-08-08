@@ -8,11 +8,16 @@ import (
 type Config struct {
 	Logger `yaml:"logger"`
 	Db     `yaml:"postgres"`
+	Secret `yaml:"secret"`
 }
 
 type Logger struct {
 	LogLevel string `yaml:"log-level"`
 	LogFile  string `yaml:"log-file"`
+}
+
+type Secret struct {
+	Key string `yaml:"key"`
 }
 
 type Db struct {
@@ -35,6 +40,5 @@ func ReadConfig() (*Config, error) {
 		return nil, fmt.Errorf("read env error: %v", err.Error)
 	}
 
-	fmt.Println(cfg)
 	return &cfg, nil
 }

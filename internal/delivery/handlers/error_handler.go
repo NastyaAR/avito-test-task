@@ -70,7 +70,7 @@ func CreateErrorResponse(ctx context.Context, errCode int, msg string) []byte {
 	return response
 }
 
-func GetReturnHTTPCode(err error) int {
+func GetReturnHTTPCode(w http.ResponseWriter, err error) int {
 	errorsList := []error{
 		domain.ErrHouse_BadRequest,
 		domain.ErrHouse_BadID,
@@ -93,5 +93,6 @@ func GetReturnHTTPCode(err error) int {
 			return http.StatusBadRequest
 		}
 	}
+	w.Header().Set("Retry-After", "120")
 	return http.StatusInternalServerError
 }

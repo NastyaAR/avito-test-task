@@ -50,17 +50,25 @@ create or replace function insert_flat_to_outbox()
     returns trigger as $$
 declare
     subscriber_mail text;
+    subscriber_mails text[];
 begin
-    select mail into subscriber_mail
-    from subscribers join users u on u.user_id = subscribers.user_id
-    where subscribers.user_id=NEW.user_id and house_id=NEW.house_id;
+    select array_agg(u.mail)
+    into subscriber_mails
+    from subscribers s
+             join users u on u.user_id = s.user_id
+    where s.house_id = new.house_id;
 
-    if subscriber_mail is null then
-        return NEW;
+    if subscriber_mails is null then
+        return new;
     end if;
 
-    insert into new_flats_outbox(flat_id, house_id, mail, status) values (NEW.flat_id, NEW.house_id, subscriber_mail, 'no send');
-    return NEW;
+    foreach subscriber_mail in array subscriber_mails
+        loop
+            insert into new_flats_outbox(flat_id, house_id, mail, status)
+            values (new.flat_id, new.house_id, subscriber_mail, 'no send');
+        end loop;
+
+    return new;
 end;
 $$ language plpgsql;
 
@@ -104,8 +112,16 @@ begin
         end if;
     end if;
 
+    if new_status = 'approved' or new_status = 'declined' or new_status = 'created' then
+        return query
+            update flats set status=new_status, moderator_id=null
+                where flats.flat_id=new_flat_id and flats.house_id=new_house_id
+                returning *;
+    end if;
+
     return query
         update flats set status=new_status, moderator_id=new_moderator_id
-            where flats.flat_id=new_flat_id and flats.house_id=new_house_id;
+            where flats.flat_id=new_flat_id and flats.house_id=new_house_id
+        returning *;
 end;
 $$ language plpgsql;

@@ -23,6 +23,7 @@ func Run(cfg *config.Config) {
 	if err != nil {
 		log.Fatal("can't create logger")
 	}
+	pkg.Key = cfg.Key
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -41,9 +42,12 @@ func Run(cfg *config.Config) {
 	notifySender := ports.NewSender()
 
 	done := make(chan bool, 1)
+	defer func() {
+		done <- true
+	}()
 	houseRepo := repo.NewPostgresHouseRepo(pool, retryAdapter)
 	houseUsecase := usecase.NewHouseUsecase(houseRepo, notifySender, notifyRepo, done,
-		5*time.Second, time.Duration(cfg.DbTimeoutSec)*time.Second, lg)
+		5*time.Second, 5*time.Second, lg)
 	houseHandler := handlers.NewHouseHandler(houseUsecase, time.Duration(cfg.DbTimeoutSec)*time.Second, lg)
 
 	userRepo := repo.NewPostrgesUserRepo(pool, retryAdapter)

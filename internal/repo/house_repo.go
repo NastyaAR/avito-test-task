@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
 )
@@ -126,19 +127,24 @@ func (p *PostgresHouseRepo) GetFlatsByHouseID(ctx context.Context, id int, statu
 	lg.Info("get flats by house id", zap.Int("house_id", id))
 
 	query := ``
+	var (
+		rows pgx.Rows
+		err  error
+	)
 	if status == domain.ModeratingStatus {
 		query = `select flat_id, houses.house_id, price, rooms, status 
 			from flats join houses
 			on flats.house_id = houses.house_id
 			where houses.house_id=$1 and flats.status=$2`
+		rows, err = p.retryAdapter.Query(ctx, query, id, status)
 	} else {
 		query = `select flat_id, houses.house_id, price, rooms, status 
 			from flats join houses
 			on flats.house_id = houses.house_id
 			where houses.house_id=$1`
+		rows, err = p.retryAdapter.Query(ctx, query, id)
 	}
 
-	rows, err := p.retryAdapter.Query(ctx, query, id, status)
 	defer rows.Close()
 	if err != nil {
 		lg.Warn("postgres house repo: get flats by house id", zap.Error(err))
