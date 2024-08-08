@@ -6,6 +6,7 @@ import (
 	"avito-test-task/internal/usecase"
 	"avito-test-task/pkg"
 	"context"
+	"fmt"
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
@@ -22,9 +23,12 @@ func initDB(connString string) {
 	m, _ := migrate.New(
 		"file:///../test_migrations",
 		"postgres://test-user:test-password@localhost:5431/test-db?sslmode=disable")
-	m.Force(20240806143730)
-	m.Down()
-	m.Up()
+	err := m.Force(20240806143730)
+	fmt.Println(err)
+	err = m.Down()
+	fmt.Println(err)
+	err = m.Up()
+	fmt.Println(err)
 }
 
 func initFlatEnv() (domain.FlatUsecase, *zap.Logger, *pgxpool.Pool) {
