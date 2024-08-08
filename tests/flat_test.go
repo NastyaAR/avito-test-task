@@ -150,6 +150,38 @@ func TestCreateBadFlatID(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func TestUpdateNormalFlat(t *testing.T) {
+	flatUsecase, lg, pool := initFlatEnv()
+	initFlatEnv()
+	initDB("")
+	defer pool.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+
+	modID, _ := uuid.Parse("019126ee-2b7d-758e-bb22-fe2e45b2db23")
+	flatReq := domain.UpdateFlatRequest{
+		ID:      10,
+		HouseID: 1,
+		Status:  "on moderation",
+	}
+
+	updFlat, err := flatUsecase.Update(ctx, modID, &flatReq, lg)
+	if err != nil {
+		assert.Fail(t, err.Error())
+	}
+
+	expected := domain.CreateFlatResponse{
+		ID:      10,
+		HouseID: 1,
+		Price:   100,
+		Rooms:   2,
+		Status:  "on moderation",
+	}
+
+	assert.Equal(t, expected, updFlat)
+}
+
 func TestUpdateBadIDFlat(t *testing.T) {
 	flatUsecase, lg, pool := initFlatEnv()
 	initFlatEnv()

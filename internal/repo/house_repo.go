@@ -122,15 +122,23 @@ func (p *PostgresHouseRepo) GetAll(ctx context.Context, offset int, limit int, l
 	return houses, err
 }
 
-func (p *PostgresHouseRepo) GetFlatsByHouseID(ctx context.Context, id int, lg *zap.Logger) ([]domain.Flat, error) {
+func (p *PostgresHouseRepo) GetFlatsByHouseID(ctx context.Context, id int, status string, lg *zap.Logger) ([]domain.Flat, error) {
 	lg.Info("get flats by house id", zap.Int("house_id", id))
 
-	query := `select flat_id, houses.house_id, price, rooms, status 
+	query := ``
+	if status == domain.ModeratingStatus {
+		query = `select flat_id, houses.house_id, price, rooms, status 
+			from flats join houses
+			on flats.house_id = houses.house_id
+			where houses.house_id=$1 and flats.status=$2`
+	} else {
+		query = `select flat_id, houses.house_id, price, rooms, status 
 			from flats join houses
 			on flats.house_id = houses.house_id
 			where houses.house_id=$1`
+	}
 
-	rows, err := p.retryAdapter.Query(ctx, query, id)
+	rows, err := p.retryAdapter.Query(ctx, query, id, status)
 	defer rows.Close()
 	if err != nil {
 		lg.Warn("postgres house repo: get flats by house id", zap.Error(err))

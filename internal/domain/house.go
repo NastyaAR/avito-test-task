@@ -70,6 +70,6 @@ type HouseRepo interface {
 	Update(ctx context.Context, newHouseData *House, lg *zap.Logger) error
 	GetByID(ctx context.Context, id int, lg *zap.Logger) (House, error)
 	GetAll(ctx context.Context, offset int, limit int, lg *zap.Logger) ([]House, error)
-	GetFlatsByHouseID(ctx context.Context, id int, lg *zap.Logger) ([]Flat, error)
+	GetFlatsByHouseID(ctx context.Context, id int, status string, lg *zap.Logger) ([]Flat, error)
 	SubscribeByID(ctx context.Context, id int, userID uuid.UUID, lg *zap.Logger) error
 }

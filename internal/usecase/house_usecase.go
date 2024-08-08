@@ -73,7 +73,7 @@ func (u *HouseUsecase) Create(ctx context.Context, req *domain.CreateHouseReques
 	return houseResponse, nil
 }
 
-func parallelFlatFilter(flats []domain.Flat, status string, lg *zap.Logger) domain.FlatsByHouseResponse {
+func parallelFlatFilter(flats []domain.Flat, lg *zap.Logger) domain.FlatsByHouseResponse {
 	var (
 		flatsArr []domain.SingleFlatResponse
 	)
@@ -95,18 +95,16 @@ func parallelFlatFilter(flats []domain.Flat, status string, lg *zap.Logger) doma
 		go func(n int, part []domain.Flat, wg *sync.WaitGroup) {
 			defer wg.Done()
 			for j := 0; j < len(part); j++ {
-				if parts[n][j].Status == status || status == domain.AnyStatus {
-					singleFlat := domain.SingleFlatResponse{
-						ID:      parts[n][j].ID,
-						HouseID: parts[n][j].HouseID,
-						Price:   parts[n][j].Price,
-						Rooms:   parts[n][j].Rooms,
-						Status:  parts[n][j].Status,
-					}
-					mtx.Lock()
-					flatsArr = append(flatsArr, singleFlat)
-					mtx.Unlock()
+				singleFlat := domain.SingleFlatResponse{
+					ID:      parts[n][j].ID,
+					HouseID: parts[n][j].HouseID,
+					Price:   parts[n][j].Price,
+					Rooms:   parts[n][j].Rooms,
+					Status:  parts[n][j].Status,
 				}
+				mtx.Lock()
+				flatsArr = append(flatsArr, singleFlat)
+				mtx.Unlock()
 			}
 		}(i, parts[i], &wg)
 	}
@@ -116,21 +114,19 @@ func parallelFlatFilter(flats []domain.Flat, status string, lg *zap.Logger) doma
 	return domain.FlatsByHouseResponse{flatsArr}
 }
 
-func usualFlatFilter(flats []domain.Flat, status string) domain.FlatsByHouseResponse {
+func usualFlatFilter(flats []domain.Flat) domain.FlatsByHouseResponse {
 	var (
 		flatsArr []domain.SingleFlatResponse
 	)
 	for _, flat := range flats {
-		if flat.Status == status || status == domain.AnyStatus {
-			singleFlat := domain.SingleFlatResponse{
-				ID:      flat.ID,
-				HouseID: flat.HouseID,
-				Price:   flat.Price,
-				Rooms:   flat.Rooms,
-				Status:  flat.Status,
-			}
-			flatsArr = append(flatsArr, singleFlat)
+		singleFlat := domain.SingleFlatResponse{
+			ID:      flat.ID,
+			HouseID: flat.HouseID,
+			Price:   flat.Price,
+			Rooms:   flat.Rooms,
+			Status:  flat.Status,
 		}
+		flatsArr = append(flatsArr, singleFlat)
 	}
 
 	return domain.FlatsByHouseResponse{flatsArr}
@@ -149,7 +145,7 @@ func (u *HouseUsecase) GetFlatsByHouseID(ctx context.Context, id int, status str
 			fmt.Errorf("house usecase: get flats by house id error: %w", domain.ErrFlat_BadStatus)
 	}
 
-	flats, err := u.houseRepo.GetFlatsByHouseID(ctx, id, lg)
+	flats, err := u.houseRepo.GetFlatsByHouseID(ctx, id, status, lg)
 	if err != nil {
 		lg.Warn("house usecase: get flats by house id error", zap.Error(err))
 		return domain.FlatsByHouseResponse{}, fmt.Errorf("house usecase: get flats by house id error: %v", err.Error())
@@ -157,9 +153,9 @@ func (u *HouseUsecase) GetFlatsByHouseID(ctx context.Context, id int, status str
 
 	var flatsResponse domain.FlatsByHouseResponse
 	if len(flats) < domain.FlatThreshhold {
-		flatsResponse = usualFlatFilter(flats, status)
+		flatsResponse = usualFlatFilter(flats)
 	} else {
-		flatsResponse = parallelFlatFilter(flats, status, lg)
+		flatsResponse = parallelFlatFilter(flats, lg)
 	}
 
 	return flatsResponse, nil
